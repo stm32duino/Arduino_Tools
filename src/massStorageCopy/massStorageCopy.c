@@ -5,6 +5,7 @@
 #include <mntent.h>
 #include <unistd.h>
 #include <errno.h>
+#include <ctype.h>
 
 static char *input_path = NULL;
 static char *output_path = NULL;
@@ -87,7 +88,7 @@ int main(int argc, char *argv[])
 
   if (strlen(input_path) && strlen(output_dev))
   {
-    /* get the mounted devives list */
+    /* get the mounted devices list */
     aFile = setmntent("/proc/mounts", "r");
     if (aFile == NULL) {
       perror("setmntent");
@@ -141,7 +142,7 @@ int main(int argc, char *argv[])
      ret = system(cmd);
 
     } else {
-      printf("%s not found. please ensure the device is correctly connected\n",
+      printf("%s not found. Please ensure the device is correctly connected\n",
                 output_dev);
       ret = ENODEV;
     }
