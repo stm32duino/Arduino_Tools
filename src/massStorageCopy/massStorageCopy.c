@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
       exit(ENOENT);
     }
 
-	p = strtok (output_dev, ",");
+	p = strtok (output_dev, ",\"");
 
     /* split output_dev and append tokens to list_output_dev */
     while (p) {
@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
 
       list_output_dev[n_output_dev-1] = p;
 
-      p = strtok (NULL, ",");
+      p = strtok (NULL, ",\"");
     }
 
     /* realloc one extra element for the last NULL */
