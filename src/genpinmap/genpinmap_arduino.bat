@@ -11,6 +11,7 @@ python genpinmap_arduino.py DISCO_F407G   "STM32F407V(E-G)Tx.xml"
 python genpinmap_arduino.py DISCO_F746NG  "STM32F746N(E-G)Hx.xml"
 python genpinmap_arduino.py NUCLEO_L053R8 "STM32L053R(6-8)Tx.xml"
 python genpinmap_arduino.py NUCLEO_L432KC "STM32L432K(B-C)Ux.xml"
+python genpinmap_arduino.py DISCO_L475VG  "STM32L475V(C-E-G)Tx.xml"
 python genpinmap_arduino.py NUCLEO_L476RG "STM32L475R(C-E-G)Tx.xml"
 
 pause
