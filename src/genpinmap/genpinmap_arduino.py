@@ -20,6 +20,7 @@ spisclk_list = []   #'PIN','name','SPISCLK'
 cantd_list = []     #'PIN','name','CANTD'
 canrd_list = []     #'PIN','name','CANRD'
 eth_list = []       #'PIN','name','ETH'
+qspi_list = []      #'PIN','name','QUADSPI'
 
 
 def find_gpio_file(xmldoc):
@@ -131,6 +132,10 @@ def store_can(pin, name, signal):
 def store_eth (pin, name, signal):
     eth_list.append([pin,name,signal])
 
+#function to store QSPI pins
+def store_qspi (pin, name, signal):
+    qspi_list.append([pin,name,signal])
+
 def print_header():
     s =  ("""/*
  *******************************************************************************
@@ -205,6 +210,8 @@ def print_all_lists():
         print_can(xml, cantd_list)
     if print_list_header("ETHERNET", "Ethernet", eth_list, "ETH"):
         print_eth(xml, eth_list)
+    if print_list_header("QUADSPI", "QUADSPI", qspi_list, "QSPI"):
+        print_qspi(xml, qspi_list)
 
 def print_list_header(comment, name, l, switch):
     if len(l)>0:
@@ -412,6 +419,33 @@ def print_eth(xml, l):
 #endif
 """)
 
+def print_qspi(xml, l):
+    i=0
+    if len(l)>0:
+        prev_s = ''
+        while i < len(l):
+            p=l[i]
+            result = get_gpio_af_num(xml, p[1], p[2])
+            if result != 'NOTFOUND':
+                s1 = "%-12s" % ("    {" + p[0] + ',')
+                #2nd element is the QUADSPI_XXXX signal
+                s1 += 'QUADSPI, STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, ' + result +')},'
+                #check duplicated lines, only signal differs
+                if (prev_s == s1):
+                    s1 = '|' + p[2]
+                else:
+                    if len(prev_s)>0:
+                        out_file.write('\n')
+                    prev_s = s1
+                    s1 += '  // ' + p[2]
+                out_file.write(s1)
+            i += 1
+
+        out_file.write( """\n    {NC,    NP,    0}
+};
+#endif
+""")
+
 tokenize = re.compile(r'(\d+)|(\D+)').findall
 def natural_sortkey(list_2_elem):
 
@@ -434,6 +468,7 @@ def sort_my_lists():
     cantd_list.sort(key=natural_sortkey)
     canrd_list.sort(key=natural_sortkey)
     eth_list.sort(key=natural_sortkey)
+    qspi_list.sort(key=natural_sortkey)
 
     return
 
@@ -554,7 +589,9 @@ for s in itemlist:
             if "CAN" in sig:
                 store_can( pin, name, sig)
             if "ETH" in sig:
-                store_eth( pin, name, sig)				
+                store_eth( pin, name, sig)
+            if "QUADSPI" in sig:
+                store_qspi( pin, name, sig)
 
 print ("    * * * Sorting lists...")
 sort_my_lists()
