@@ -561,7 +561,7 @@ pinregex=r'^(P[A-Z][0-9][0-5]?)'
 for s in itemlist:
     m = re.match(pinregex, s.attributes['Name'].value)
     if m:
-        pin = m.group(0) # pin formatted P<port><number>: PFO
+        pin = m.group(0)[:2] + '_' + m.group(0)[2:] # pin formatted P<port>_<number>: PF_O
         name = s.attributes['Name'].value.strip()   # full name: "PF0 / OSC_IN"
         if s.attributes['Type'].value == "I/O":
             store_pin(pin, name)
