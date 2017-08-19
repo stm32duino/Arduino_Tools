@@ -33,6 +33,8 @@ def find_gpio_file(xmldoc):
     return res
 
 def get_gpio_af_num(xml, pintofind, iptofind):
+    if 'STM32F10' in sys.argv[2]:
+        return get_gpio_af_numF1(xml, pintofind, iptofind)
 #    xml = parse('GPIO-STM32L051_gpio_v1_0_Modes.xml')
     #xml = parse(gpiofile)
     #DBG print ('pin to find ' + pintofind)
@@ -42,36 +44,83 @@ def get_gpio_af_num(xml, pintofind, iptofind):
         i += 1
         j = 0
         if n.nodeType == Node.ELEMENT_NODE:
-            for premlevel in n.attributes.items():
-#                if 'PB7' in premlevel:
-                if pintofind ==  premlevel[1]:
-                    #DBG print (i , premlevel)
-                    #n = noeud de la pin recherchee
+            for firstlevel in n.attributes.items():
+#                if 'PB7' in firstlevel:
+                if pintofind ==  firstlevel[1]:
+                    #DBG print (i , firstlevel)
+                    #n = pin node found
                     for m in n.childNodes:
                         j += 1
                         k = 0
                         if m.nodeType == Node.ELEMENT_NODE:
-                            for deuzlevel in  m.attributes.items():
+                            for secondlevel in  m.attributes.items():
                                 k += 1
-#                                if 'I2C1_SDA' in deuzlevel:
-                                if iptofind in deuzlevel:
+#                                if 'I2C1_SDA' in secondlevel:
+                                if iptofind in secondlevel:
                                     #DBG print (i, j,  m.attributes.items())
-                                    # m = noeud de l'IP recherchee
+                                    # m = IP node found
                                     for p in m.childNodes:
                                         if p.nodeType == Node.ELEMENT_NODE:
-                                            #p noeud du 'Specific parameter'
+                                            #p node of 'Specific parameter'
                                             #DBG print (i,j,k,p.attributes.items())
                                             for myc in p.childNodes:
                                                 #DBG print (myc)
                                                 if myc.nodeType == Node.ELEMENT_NODE:
-                                                    #myc = noeud du ALTERNATE !!! ENFIN !!!
+                                                    #myc = node of ALTERNATE
                                                     for mygpioaflist in myc.childNodes:
-                                                        mygpioaf = mygpioaflist.data
+                                                        mygpioaf += ' ' + mygpioaflist.data
                                                         #print (mygpioaf)
     if mygpioaf == 'NOTFOUND':
         print ('GPIO AF not found in ' + gpiofile + ' for ' + pintofind + ' and the IP ' + iptofind)
         #quit()
-    return mygpioaf
+    return mygpioaf.replace('NOTFOUND ', '')
+
+def get_gpio_af_numF1(xml, pintofind, iptofind):
+    #print ('pin to find ' + pintofind + ' ip to find ' + iptofind)
+    i=0
+    mygpioaf = 'NOTFOUND'
+    for n in  xml.documentElement.childNodes:
+        i += 1
+        j = 0
+        if n.nodeType == Node.ELEMENT_NODE:
+            for firstlevel in n.attributes.items():
+                #print ('firstlevel ' , firstlevel)
+#                if 'PB7' in firstlevel:
+                if pintofind ==  firstlevel[1]:
+                    #print ('firstlevel ' , i , firstlevel)
+                    #n = pin node found
+                    for m in n.childNodes:
+                        j += 1
+                        k = 0
+                        if m.nodeType == Node.ELEMENT_NODE:
+                            for secondlevel in  m.attributes.items():
+                                #print ('secondlevel ' , i, j, k , secondlevel)
+                                k += 1
+#                                if 'I2C1_SDA' in secondlevel:
+                                if iptofind in secondlevel:
+                                    # m = IP node found
+                                    #print (i, j,  m.attributes.items())
+                                    if m.hasChildNodes() == False:
+                                        mygpioaf = 'AFIO_NONE'
+                                    else:
+                                        for p in m.childNodes:
+                                            #p node 'RemapBlock'
+                                            for s in p.childNodes:
+                                                if s.nodeType == Node.ELEMENT_NODE:
+                                                    #s node 'Specific parameter'
+                                                    #DBG print (i,j,k,p.attributes.items())
+                                                    for myc in s.childNodes:
+                                                        #DBG print (myc)
+                                                        if myc.nodeType == Node.ELEMENT_NODE:
+                                                            #myc = AF value
+                                                            for mygpioaflist in myc.childNodes:
+                                                                mygpioaf += ' ' + mygpioaflist.data.replace("__HAL_", "").replace("_REMAP", "")
+                                                                #print mygpioaf
+    if mygpioaf == 'NOTFOUND':
+        print ('GPIO AF not found in ' + gpiofile + ' for ' + pintofind + ' and the IP ' + iptofind + ' set as AFIO_NONE')
+        mygpioaf = 'AFIO_NONE'
+    return mygpioaf.replace('NOTFOUND ', '')
+
 
 def store_pin (pin, name):
     #store pin I/O
@@ -293,8 +342,10 @@ def print_i2c(xml, l):
                 #2nd element is the I2C XXX signal
                 b = p[2].split('_')[0]
                 s1 += b[:len(b)-1] + b[len(b)-1] + ', STM_PIN_DATA(STM_MODE_AF_OD, GPIO_NOPULL, '
-                s1 += result + ')},\n'
-                out_file.write(s1)
+                r = result.split(' ')
+                for af in r:
+                    s2 = s1 + af  + ')},\n'
+                    out_file.write(s2)
             i += 1
         out_file.write( """    {NC,    NP,    0}
 };
@@ -321,9 +372,11 @@ def print_pwm(xml):
                     chan = chan.strip('N')
                 else:
                     neg = ', 0'
-                s1 += 'STM_PIN_DATA_EXT(STM_MODE_AF_PP, GPIO_PULLUP, ' + result + ', ' + chan + neg
-                s1 += ')},  // ' + p[2] + '\n'
-                out_file.write(s1)
+                s1 += 'STM_PIN_DATA_EXT(STM_MODE_AF_PP, GPIO_PULLUP, '
+                r = result.split(' ')
+                for af in r:
+                    s2 = s1 + af + ', ' + chan + neg + ')},  // ' + p[2] + '\n'
+                    out_file.write(s2)
             i += 1
         out_file.write( """    {NC,    NP,    0}
 };
@@ -341,8 +394,11 @@ def print_uart(xml, l):
                 #2nd element is the UART_XX signal
                 b=p[2].split('_')[0]
                 s1 += "%-9s" % (b[:len(b)-1] +  b[len(b)-1:] + ',')
-                s1 += 'STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, ' + result +')},\n'
-                out_file.write(s1)
+                s1 += 'STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, '
+                r = result.split(' ')
+                for af in r:
+                    s2 = s1 + af  + ')},\n'
+                    out_file.write(s2)
             i += 1
 
     out_file.write( """    {NC,    NP,    0}
@@ -361,8 +417,10 @@ def print_spi(xml, l):
                 #2nd element is the SPI_XXXX signal
                 instance=p[2].split('_')[0].replace("SPI", "")
                 s1 += 'SPI' + instance + ', STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, '
-                s1 += result +')},\n'
-                out_file.write(s1)
+                r = result.split(' ')
+                for af in r:
+                    s2 = s1 + af  + ')},\n'
+                    out_file.write(s2)
             i += 1
 
         out_file.write( """    {NC,    NP,    0}
@@ -384,8 +442,10 @@ def print_can(xml, l):
                 #if len(instance) == 0:
                 #    instance = '1'
                 s1 += 'CAN' + instance + ', STM_PIN_DATA(STM_MODE_AF_PP, GPIO_NOPULL, '
-                s1 += result +')},\n'
-                out_file.write( s1)
+                r = result.split(' ')
+                for af in r:
+                    s2 = s1 + af  + ')},\n'
+                    out_file.write(s2)
             i += 1
         out_file.write( """    {NC,    NP,    0}
 };
@@ -547,10 +607,6 @@ if (os.path.isfile(output_filename)):
 
 out_file = open(output_filename, 'w')
 
-# Check if Alternate functions in GPIO or old GPIO (no alternate)
-if 'STM32F10' in sys.argv[2]:
-    print ("STM32F10xx MCU not supported due to older GPIO IP version\n")
-    quit()
 
 gpiofile = find_gpio_file(xmldoc)
 if gpiofile == 'ERROR':

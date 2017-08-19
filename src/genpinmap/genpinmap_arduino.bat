@@ -5,7 +5,8 @@
 
 python genpinmap_arduino.py NUCLEO_F030R8 "STM32F030R8Tx.xml"
 python genpinmap_arduino.py NUCLEO_F091RC "STM32F091R(B-C)Tx.xml"
-#python genpinmap_arduino.py NUCLEO_F103RB "STM32F103R(8-B)Tx.xml"
+python genpinmap_arduino.py DISCO_F100RB "STM32F100R(8-B)Tx.xml"
+python genpinmap_arduino.py NUCLEO_F103RB "STM32F103R(8-B)Tx.xml"
 python genpinmap_arduino.py NUCLEO_F207ZG "STM32F207Z(C-E-F-G)Tx.xml"
 python genpinmap_arduino.py NUCLEO_F303RE "STM32F303R(D-E)Tx.xml"
 python genpinmap_arduino.py NUCLEO_F401RE "STM32F401R(D-E)Tx.xml"
