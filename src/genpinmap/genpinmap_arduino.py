@@ -394,7 +394,10 @@ def print_uart(xml, l):
                 #2nd element is the UART_XX signal
                 b=p[2].split('_')[0]
                 s1 += "%-9s" % (b[:len(b)-1] +  b[len(b)-1:] + ',')
-                s1 += 'STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, '
+                if 'STM32F10' in sys.argv[2] and l == uartrx_list:
+                    s1 += 'STM_PIN_DATA(STM_MODE_INPUT, GPIO_PULLUP, '
+                else:
+                    s1 += 'STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, '
                 r = result.split(' ')
                 for af in r:
                     s2 = s1 + af  + ')},\n'
@@ -441,7 +444,10 @@ def print_can(xml, l):
                 instance = p[2].split('_')[0].replace("CAN", "")
                 #if len(instance) == 0:
                 #    instance = '1'
-                s1 += 'CAN' + instance + ', STM_PIN_DATA(STM_MODE_AF_PP, GPIO_NOPULL, '
+                if 'STM32F10' in sys.argv[2] and l == canrd_list:
+                    s1 += 'CAN' + instance + 'STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, '
+                else:
+                    s1 += 'CAN' + instance + ', STM_PIN_DATA(STM_MODE_AF_PP, GPIO_NOPULL, '
                 r = result.split(' ')
                 for af in r:
                     s2 = s1 + af  + ')},\n'
