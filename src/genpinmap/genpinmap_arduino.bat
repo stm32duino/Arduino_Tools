@@ -1,8 +1,5 @@
 :: See xml file name in C:\Program Files\STMicroelectronics\STM32Cube\STM32CubeMX\db\mcu
 
-:: GPIO AF function not supported:: python genpinmap_arduino.py NUCLEO_F030R8 "STM32F030R8Tx.xml"
-:: GPIO AF function not supported::python genpinmap_arduino.py DISCO_F051R8  "STM32F051R8Tx.xml"
-
 python genpinmap_arduino.py NUCLEO_F030R8 "STM32F030R8Tx.xml"
 python genpinmap_arduino.py NUCLEO_F091RC "STM32F091R(B-C)Tx.xml"
 python genpinmap_arduino.py DISCO_F100RB "STM32F100R(8-B)Tx.xml"
