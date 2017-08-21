@@ -445,7 +445,7 @@ def print_can(xml, l):
                 #if len(instance) == 0:
                 #    instance = '1'
                 if 'STM32F10' in sys.argv[2] and l == canrd_list:
-                    s1 += 'CAN' + instance + 'STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, '
+                    s1 += 'CAN' + instance + ', STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, '
                 else:
                     s1 += 'CAN' + instance + ', STM_PIN_DATA(STM_MODE_AF_PP, GPIO_NOPULL, '
                 r = result.split(' ')
