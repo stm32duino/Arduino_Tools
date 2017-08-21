@@ -100,11 +100,11 @@ def get_gpio_af_numF1(xml, pintofind, iptofind):
                                 if iptofind in secondlevel:
                                     # m = IP node found
                                     #print (i, j,  m.attributes.items())
-                                    if m.hasChildNodes() == False:
-                                        mygpioaf = 'AFIO_NONE'
-                                    else:
-                                        for p in m.childNodes:
-                                            #p node 'RemapBlock'
+                                    for p in m.childNodes:
+                                        #p node 'RemapBlock'
+                                        if p.nodeType == Node.ELEMENT_NODE and p.hasChildNodes() == False:
+                                            mygpioaf += ' AFIO_NONE'
+                                        else:
                                             for s in p.childNodes:
                                                 if s.nodeType == Node.ELEMENT_NODE:
                                                     #s node 'Specific parameter'
