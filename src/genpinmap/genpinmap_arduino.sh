@@ -36,3 +36,7 @@ python genpinmap_arduino.py NUCLEO_L152RE "STM32L152RETx.xml"
 python genpinmap_arduino.py NUCLEO_L432KC "STM32L432K(B-C)Ux.xml"
 python genpinmap_arduino.py DISCO_L475VG  "STM32L475V(C-E-G)Tx.xml"
 python genpinmap_arduino.py NUCLEO_L476RG "STM32L475R(C-E-G)Tx.xml"
+
+python genpinmap_arduino.py BLUEPILL_F103C8 "STM32F103C(8-B)Tx.xml"
+#same for MAPLEMINI_F103CB
+python genpinmap_arduino.py MAPLEMINI_F103CB "STM32F103C(8-B)Tx.xml"
