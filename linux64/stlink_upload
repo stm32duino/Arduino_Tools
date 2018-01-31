@@ -3,8 +3,6 @@ LD_LIBRARY_PATH=$(dirname $0)/stlink/lib
 $(dirname $0)/stlink/st-flash write "$4" 0x8000000
 exit 0
 
-## Remove the lines 2 and 3 (above) if you want this script to wait until the Serial device has been enumerated and loaded before the script exits
-
 # Check for leaf device.
 function leaf_status()
 {
