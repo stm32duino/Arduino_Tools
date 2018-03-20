@@ -1,6 +1,7 @@
 import sys
 import re
 import os
+import datetime
 from xml.dom import minidom
 from xml.dom.minidom import parse, Node
 io_list = []      #'PIN','name'
@@ -188,7 +189,7 @@ def store_qspi (pin, name, signal):
 def print_header():
     s =  ("""/*
  *******************************************************************************
- * Copyright (c) 2016, STMicroelectronics
+ * Copyright (c) %i, STMicroelectronics
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -223,7 +224,7 @@ def print_header():
 //       If you change them, you will have to know what you do
 // =====
 
-""" % re.sub('\.c$', '', out_filename))
+""" % (datetime.datetime.now().year, re.sub('\.c$', '', out_filename)))
     out_file.write( s)
 
 def print_all_lists():
