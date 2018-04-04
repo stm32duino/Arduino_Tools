@@ -302,7 +302,7 @@ def print_adc():
                 if len(inst) == 0:
                     inst = '1' #single ADC for this product
                 s1 += "%-7s" % ('ADC' + inst + ',')
-                chan = a[1].replace("IN", "")
+                chan = re.sub('IN[N|P]?', '', a[1])
                 s1 += s_pin_data + chan
                 s1 += ', 0)}, // ' + p[2] + '\n'
                 out_file.write(s1)
