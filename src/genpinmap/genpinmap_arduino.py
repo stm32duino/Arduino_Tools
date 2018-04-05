@@ -215,16 +215,17 @@ def print_header():
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************
+ * Automatically generated from %s
  */
 #include "Arduino.h"
 #include "%s.h"
 
-// =====
-// Note: Commented lines are alternative possibilities which are not used per default.
-//       If you change them, you will have to know what you do
-// =====
-
-""" % (datetime.datetime.now().year, re.sub('\.c$', '', out_filename)))
+/* =====
+ * Note: Commented lines are alternative possibilities which are not used per default.
+ *       If you change them, you will have to know what you do
+ * =====
+ */
+""" % (datetime.datetime.now().year, os.path.basename(input_file_name), re.sub('\.c$', '', out_filename)))
     out_file.write( s)
 
 def print_all_lists():
@@ -540,7 +541,6 @@ def sort_my_lists():
     return
 
 # START MAIN PROGRAM
-#xmldoc = minidom.parse('STM32L051K(6-8)Tx.xml')
 cur_dir = os.getcwd()
 out_filename = 'PeripheralPins.c'
 
@@ -635,26 +635,26 @@ for s in itemlist:
             sig = a.attributes['Name'].value.strip()
             if "ADC" in sig:
                 #store ADC pin
-                store_adc( pin, name, sig)
+                store_adc(pin, name, sig)
             if all(["DAC" in sig, "_OUT" in sig]):
                 #store DAC
-                store_dac( pin, name, sig)
+                store_dac(pin, name, sig)
             if "I2C" in sig:
                 #store DAC
-                store_i2c( pin, name, sig)
+                store_i2c(pin, name, sig)
             if re.match('^TIM', sig) is not None: #ignore HRTIM
                 #store PWM
-                store_pwm( pin, name, sig)
+                store_pwm(pin, name, sig)
             if re.match('^(LPU|US|U)ART', sig) is not None:
-                store_uart( pin, name, sig)
+                store_uart(pin, name, sig)
             if "SPI" in sig:
-                store_spi( pin, name, sig)
+                store_spi(pin, name, sig)
             if "CAN" in sig:
-                store_can( pin, name, sig)
+                store_can(pin, name, sig)
             if "ETH" in sig:
-                store_eth( pin, name, sig)
+                store_eth(pin, name, sig)
             if "QUADSPI" in sig:
-                store_qspi( pin, name, sig)
+                store_qspi(pin, name, sig)
 
 print ("    * * * Sorting lists...")
 sort_my_lists()

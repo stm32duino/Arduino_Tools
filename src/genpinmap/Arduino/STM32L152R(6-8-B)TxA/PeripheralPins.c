@@ -26,15 +26,16 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *******************************************************************************
+ * Automatically generated from STM32L152R(6-8-B)TxA.xml
  */
 #include "Arduino.h"
 #include "PeripheralPins.h"
 
-// =====
-// Note: Commented lines are alternative possibilities which are not used per default.
-//       If you change them, you will have to know what you do
-// =====
-
+/* =====
+ * Note: Commented lines are alternative possibilities which are not used per default.
+ *       If you change them, you will have to know what you do
+ * =====
+ */
 
 //*** ADC ***
 
