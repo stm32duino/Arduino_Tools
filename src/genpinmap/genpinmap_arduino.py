@@ -22,6 +22,9 @@ cantd_list = []     #'PIN','name','CANTD'
 canrd_list = []     #'PIN','name','CANRD'
 eth_list = []       #'PIN','name','ETH'
 qspi_list = []      #'PIN','name','QUADSPI'
+dfsdmdatin_list = []    #'PIN','name','DFSDMDATIN'
+dfsdmckin_list = []     #'PIN','name','DFSDMCKIN'
+dfsdmckout_list = []     #'PIN','name','DFSDMCKOUT'
 
 
 def find_gpio_file(xmldoc):
@@ -186,6 +189,15 @@ def store_eth (pin, name, signal):
 def store_qspi (pin, name, signal):
     qspi_list.append([pin,name,signal])
 
+#function to store DFSDM pins
+def store_dfsdm (pin, name, signal):
+    if "_DATIN" in signal:
+        dfsdmdatin_list.append([pin,name,signal])
+    if "_CKIN" in signal:
+        dfsdmckin_list.append([pin,name,signal])
+    if "_CKOUT" in signal:
+        dfsdmckout_list.append([pin,name,signal])
+
 def print_header():
     s =  ("""/*
  *******************************************************************************
@@ -262,6 +274,12 @@ def print_all_lists():
         print_eth(xml, eth_list)
     if print_list_header("QUADSPI", "QUADSPI", qspi_list, "QSPI"):
         print_qspi(xml, qspi_list)
+    if print_list_header("DFSDM", "DFSDM_DATIN", dfsdmdatin_list, "DFSDM"):
+        print_dfsdm(xml, dfsdmdatin_list)
+    if print_list_header("", "DFSDM_CKIN", dfsdmckin_list, "DFSDM"):
+        print_dfsdm(xml, dfsdmckin_list)
+    if print_list_header("", "DFSDM_CKOUT", dfsdmckout_list, "DFSDM"):
+        print_dfsdm(xml, dfsdmckout_list)
 
 def print_list_header(comment, name, l, switch):
     if len(l)>0:
@@ -513,6 +531,35 @@ def print_qspi(xml, l):
 #endif
 """)
 
+def print_dfsdm(xml, l):
+    i=0
+    if len(l)>0:
+        prev_s = ''
+        while i < len(l):
+            p=l[i]
+            result = get_gpio_af_num(xml, p[1], p[2])
+            if result != 'NOTFOUND':
+                s1 = "%-12s" % ("    {" + p[0] + ',')
+                a = p[2].split('_')
+                inst = a[0]
+                s1 += "%-8s" % (inst + ',')
+                if a[1].startswith("DATIN"):
+                    chan = a[1].replace("DATIN", "")
+                    s1 += 'STM_PIN_DATA_EXT(STM_MODE_AF_PP, GPIO_NOPULL, ' + result + ', ' + chan + ', 0'
+                elif a[1].startswith("CKIN"):
+                    chan = a[1].replace("CKIN", "")
+                    s1 += 'STM_PIN_DATA_EXT(STM_MODE_AF_PP, GPIO_NOPULL, ' + result + ', ' + chan + ', 0'
+                else:
+                    s1 += 'STM_PIN_DATA(STM_MODE_AF_PP, GPIO_NOPULL, ' + result
+                s1 += ')},  // ' + p[2] + '\n'
+                out_file.write(s1)
+            i += 1
+
+        out_file.write( """    {NC,    NP,    0}
+};
+#endif
+""")
+
 tokenize = re.compile(r'(\d+)|(\D+)').findall
 def natural_sortkey(list_2_elem):
 
@@ -536,6 +583,9 @@ def sort_my_lists():
     canrd_list.sort(key=natural_sortkey)
     eth_list.sort(key=natural_sortkey)
     qspi_list.sort(key=natural_sortkey)
+    dfsdmdatin_list.sort(key=natural_sortkey)
+    dfsdmckin_list.sort(key=natural_sortkey)
+    dfsdmckout_list.sort(key=natural_sortkey)
 
     return
 
@@ -655,6 +705,8 @@ for s in itemlist:
                 store_eth( pin, name, sig)
             if "QUADSPI" in sig:
                 store_qspi( pin, name, sig)
+            if "DFSDM" in sig:
+                store_dfsdm( pin, name, sig)
 
 print ("    * * * Sorting lists...")
 sort_my_lists()
