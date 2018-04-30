@@ -296,226 +296,185 @@ const PinMap PinMap_%s[] = {
     return len(l)
 
 def print_adc():
-    i = 0
-    if len(adclist)>0:
-        # Check GPIO version (alternate or not)
-        s_pin_data = 'STM_PIN_DATA_EXT(STM_MODE_ANALOG, GPIO_NOPULL, 0, '
-        while i < len(adclist):
-            p=adclist[i]
-            if "IN" in p[2]:
-                s1 = "%-12s" % ("    {" + p[0] + ',')
-                a = p[2].split('_')
-                inst = a[0].replace("ADC", "")
-                if len(inst) == 0:
-                    inst = '1' #single ADC for this product
-                s1 += "%-7s" % ('ADC' + inst + ',')
-                chan = re.sub('IN[N|P]?', '', a[1])
-                s1 += s_pin_data + chan
-                s1 += ', 0)}, // ' + p[2] + '\n'
-                out_file.write(s1)
-            i += 1
-
-        out_file.write( """    {NC,    NP,    0}
+    # Check GPIO version (alternate or not)
+    s_pin_data = 'STM_PIN_DATA_EXT(STM_MODE_ANALOG, GPIO_NOPULL, 0, '
+    for p in adclist:
+        if "IN" in p[2]:
+            s1 = "%-12s" % ("    {" + p[0] + ',')
+            a = p[2].split('_')
+            inst = a[0].replace("ADC", "")
+            if len(inst) == 0:
+                inst = '1' #single ADC for this product
+            s1 += "%-7s" % ('ADC' + inst + ',')
+            chan = re.sub('IN[N|P]?', '', a[1])
+            s1 += s_pin_data + chan
+            s1 += ', 0)}, // ' + p[2] + '\n'
+            out_file.write(s1)
+    out_file.write( """    {NC,    NP,    0}
 };
 #endif
 """)
 
 def print_dac():
-    i = 0
-    if len(daclist)>0:
-        while i < len(daclist):
-            p=daclist[i]
-            b=p[2]
-            s1 = "%-12s" % ("    {" + p[0] + ',')
-            #2nd element is the DAC signal
-            if b[3] == '_': # 1 DAC in this chip
-                s1 += 'DAC1, STM_PIN_DATA_EXT(STM_MODE_ANALOG, GPIO_NOPULL, 0, ' + b[7] + ', 0)}, // ' + b + '\n'
-            else:
-                s1 += 'DAC' + b[3] + ', STM_PIN_DATA_EXT(STM_MODE_ANALOG, GPIO_NOPULL, 0, ' + b[8] + ', 0)}, // ' + b + '\n'
-            out_file.write(s1)
-            i += 1
-        out_file.write( """    {NC,   NP,    0}
+    for p in daclist:
+        b=p[2]
+        s1 = "%-12s" % ("    {" + p[0] + ',')
+        #2nd element is the DAC signal
+        if b[3] == '_': # 1 DAC in this chip
+            s1 += 'DAC1, STM_PIN_DATA_EXT(STM_MODE_ANALOG, GPIO_NOPULL, 0, ' + b[7] + ', 0)}, // ' + b + '\n'
+        else:
+            s1 += 'DAC' + b[3] + ', STM_PIN_DATA_EXT(STM_MODE_ANALOG, GPIO_NOPULL, 0, ' + b[8] + ', 0)}, // ' + b + '\n'
+        out_file.write(s1)
+    out_file.write( """    {NC,   NP,    0}
 };
 #endif
 """)
 
 def print_i2c(xml, l):
-    i = 0
-    if len(l)>0:
-        while i < len(l):
-            p=l[i]
-            result = get_gpio_af_num(xml, p[1], p[2])
-            if result != 'NOTFOUND':
-                s1 = "%-12s" % ("    {" + p[0] + ',')
-                #2nd element is the I2C XXX signal
-                b = p[2].split('_')[0]
-                s1 += b[:len(b)-1] + b[len(b)-1] + ', STM_PIN_DATA(STM_MODE_AF_OD, GPIO_NOPULL, '
-                r = result.split(' ')
-                for af in r:
-                    s2 = s1 + af  + ')},\n'
-                    out_file.write(s2)
-            i += 1
-        out_file.write( """    {NC,    NP,    0}
+    for p in l:
+        result = get_gpio_af_num(xml, p[1], p[2])
+        if result != 'NOTFOUND':
+            s1 = "%-12s" % ("    {" + p[0] + ',')
+            #2nd element is the I2C XXX signal
+            b = p[2].split('_')[0]
+            s1 += b[:len(b)-1] + b[len(b)-1] + ', STM_PIN_DATA(STM_MODE_AF_OD, GPIO_NOPULL, '
+            r = result.split(' ')
+            for af in r:
+                s2 = s1 + af  + ')},\n'
+                out_file.write(s2)
+    out_file.write( """    {NC,    NP,    0}
 };
 #endif
 """)
 
 def print_pwm(xml):
-    i=0
-    if len(pwm_list)>0:
-        while i < len(pwm_list):
-            p=pwm_list[i]
-            result = get_gpio_af_num(xml, p[1], p[2])
-            if result != 'NOTFOUND':
-                s1 = "%-12s" % ("    {" + p[0] + ',')
-                #2nd element is the PWM signal
-                a = p[2].split('_')
-                inst = a[0]
-                if len(inst) == 3:
-                    inst += '1'
-                s1 += "%-8s" % (inst + ',')
-                chan = a[1].replace("CH", "")
-                if chan.endswith('N'):
-                    neg = ', 1'
-                    chan = chan.strip('N')
-                else:
-                    neg = ', 0'
-                s1 += 'STM_PIN_DATA_EXT(STM_MODE_AF_PP, GPIO_PULLUP, '
-                r = result.split(' ')
-                for af in r:
-                    s2 = s1 + af + ', ' + chan + neg + ')},  // ' + p[2] + '\n'
-                    out_file.write(s2)
-            i += 1
-        out_file.write( """    {NC,    NP,    0}
+    for p in pwm_list:
+        result = get_gpio_af_num(xml, p[1], p[2])
+        if result != 'NOTFOUND':
+            s1 = "%-12s" % ("    {" + p[0] + ',')
+            #2nd element is the PWM signal
+            a = p[2].split('_')
+            inst = a[0]
+            if len(inst) == 3:
+                inst += '1'
+            s1 += "%-8s" % (inst + ',')
+            chan = a[1].replace("CH", "")
+            if chan.endswith('N'):
+                neg = ', 1'
+                chan = chan.strip('N')
+            else:
+                neg = ', 0'
+            s1 += 'STM_PIN_DATA_EXT(STM_MODE_AF_PP, GPIO_PULLUP, '
+            r = result.split(' ')
+            for af in r:
+                s2 = s1 + af + ', ' + chan + neg + ')},  // ' + p[2] + '\n'
+                out_file.write(s2)
+    out_file.write( """    {NC,    NP,    0}
 };
 #endif
 """)
 
 def print_uart(xml, l):
-    i=0
-    if len(l)>0:
-        while i < len(l):
-            p=l[i]
-            result = get_gpio_af_num(xml, p[1], p[2])
-            if result != 'NOTFOUND':
-                s1 = "%-12s" % ("    {" + p[0] + ',')
-                #2nd element is the UART_XX signal
-                b=p[2].split('_')[0]
-                s1 += "%-9s" % (b[:len(b)-1] +  b[len(b)-1:] + ',')
-                if 'STM32F10' in mcu_file and l == uartrx_list:
-                    s1 += 'STM_PIN_DATA(STM_MODE_INPUT, GPIO_PULLUP, '
-                else:
-                    s1 += 'STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, '
-                r = result.split(' ')
-                for af in r:
-                    s2 = s1 + af  + ')},\n'
-                    out_file.write(s2)
-            i += 1
-
+    for p in l:
+        result = get_gpio_af_num(xml, p[1], p[2])
+        if result != 'NOTFOUND':
+            s1 = "%-12s" % ("    {" + p[0] + ',')
+            #2nd element is the UART_XX signal
+            b=p[2].split('_')[0]
+            s1 += "%-9s" % (b[:len(b)-1] +  b[len(b)-1:] + ',')
+            if 'STM32F10' in mcu_file and l == uartrx_list:
+                s1 += 'STM_PIN_DATA(STM_MODE_INPUT, GPIO_PULLUP, '
+            else:
+                s1 += 'STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, '
+            r = result.split(' ')
+            for af in r:
+                s2 = s1 + af  + ')},\n'
+                out_file.write(s2)
     out_file.write( """    {NC,    NP,    0}
 };
 #endif
 """)
 
 def print_spi(xml, l):
-    i=0
-    if len(l)>0:
-        while i < len(l):
-            p=l[i]
-            result = get_gpio_af_num(xml, p[1], p[2])
-            if result != 'NOTFOUND':
-                s1 = "%-12s" % ("    {" + p[0] + ',')
-                #2nd element is the SPI_XXXX signal
-                instance=p[2].split('_')[0].replace("SPI", "")
-                s1 += 'SPI' + instance + ', STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, '
-                r = result.split(' ')
-                for af in r:
-                    s2 = s1 + af  + ')},\n'
-                    out_file.write(s2)
-            i += 1
-
-        out_file.write( """    {NC,    NP,    0}
+    for p in l:
+        result = get_gpio_af_num(xml, p[1], p[2])
+        if result != 'NOTFOUND':
+            s1 = "%-12s" % ("    {" + p[0] + ',')
+            #2nd element is the SPI_XXXX signal
+            instance=p[2].split('_')[0].replace("SPI", "")
+            s1 += 'SPI' + instance + ', STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, '
+            r = result.split(' ')
+            for af in r:
+                s2 = s1 + af  + ')},\n'
+                out_file.write(s2)
+    out_file.write( """    {NC,    NP,    0}
 };
 #endif
 """)
 
 def print_can(xml, l):
-    i=0
-    if len(l)>0:
-        while i < len(l):
-            p=l[i]
-            b=p[2]
-            result = get_gpio_af_num(xml, p[1], p[2])
-            if result != 'NOTFOUND':
-                s1 = "%-12s" % ("    {" + p[0] + ',')
-                #2nd element is the CAN_XX signal
-                instance = p[2].split('_')[0].replace("CAN", "")
-                if len(instance) == 0:
-                    instance = '1'
-                if 'STM32F10' in mcu_file and l == canrd_list:
-                    s1 += 'CAN' + instance + ', STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, '
-                else:
-                    s1 += 'CAN' + instance + ', STM_PIN_DATA(STM_MODE_AF_PP, GPIO_NOPULL, '
-                r = result.split(' ')
-                for af in r:
-                    s2 = s1 + af  + ')},\n'
-                    out_file.write(s2)
-            i += 1
-        out_file.write( """    {NC,    NP,    0}
+    for p in l:
+        b=p[2]
+        result = get_gpio_af_num(xml, p[1], p[2])
+        if result != 'NOTFOUND':
+            s1 = "%-12s" % ("    {" + p[0] + ',')
+            #2nd element is the CAN_XX signal
+            instance = p[2].split('_')[0].replace("CAN", "")
+            if len(instance) == 0:
+                instance = '1'
+            if 'STM32F10' in mcu_file and l == canrd_list:
+                s1 += 'CAN' + instance + ', STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, '
+            else:
+                s1 += 'CAN' + instance + ', STM_PIN_DATA(STM_MODE_AF_PP, GPIO_NOPULL, '
+            r = result.split(' ')
+            for af in r:
+                s2 = s1 + af  + ')},\n'
+                out_file.write(s2)
+    out_file.write( """    {NC,    NP,    0}
 };
 #endif
 """)
 
 def print_eth(xml, l):
-    i=0
-    if len(l)>0:
-        prev_s = ''
-        while i < len(l):
-            p=l[i]
-            result = get_gpio_af_num(xml, p[1], p[2])
-            if result != 'NOTFOUND':
-                s1 = "%-12s" % ("    {" + p[0] + ',')
-                #2nd element is the ETH_XXXX signal
-                s1 += 'ETH, STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, ' + result +')},'
-                #check duplicated lines, only signal differs
-                if (prev_s == s1):
-                    s1 = '|' + p[2]
-                else:
-                    if len(prev_s)>0:
-                        out_file.write('\n')
-                    prev_s = s1
-                    s1 += '  // ' + p[2]
-                out_file.write(s1)
-            i += 1
-
-        out_file.write( """\n    {NC,    NP,    0}
+    prev_s = ''
+    for p in l:
+        result = get_gpio_af_num(xml, p[1], p[2])
+        if result != 'NOTFOUND':
+            s1 = "%-12s" % ("    {" + p[0] + ',')
+            #2nd element is the ETH_XXXX signal
+            s1 += 'ETH, STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, ' + result +')},'
+            #check duplicated lines, only signal differs
+            if (prev_s == s1):
+                s1 = '|' + p[2]
+            else:
+                if len(prev_s)>0:
+                    out_file.write('\n')
+                prev_s = s1
+                s1 += '  // ' + p[2]
+            out_file.write(s1)
+    out_file.write( """\n    {NC,    NP,    0}
 };
 #endif
 """)
 
 def print_qspi(xml, l):
-    i=0
-    if len(l)>0:
-        prev_s = ''
-        while i < len(l):
-            p=l[i]
-            result = get_gpio_af_num(xml, p[1], p[2])
-            if result != 'NOTFOUND':
-                s1 = "%-12s" % ("    {" + p[0] + ',')
-                #2nd element is the QUADSPI_XXXX signal
-                s1 += 'QUADSPI, STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, ' + result +')},'
-                #check duplicated lines, only signal differs
-                if (prev_s == s1):
-                    s1 = '|' + p[2]
-                else:
-                    if len(prev_s)>0:
-                        out_file.write('\n')
-                    prev_s = s1
-                    s1 += '  // ' + p[2]
-                out_file.write(s1)
-            i += 1
-
-        out_file.write( """\n    {NC,    NP,    0}
+    prev_s = ''
+    for p in l:
+        result = get_gpio_af_num(xml, p[1], p[2])
+        if result != 'NOTFOUND':
+            s1 = "%-12s" % ("    {" + p[0] + ',')
+            #2nd element is the QUADSPI_XXXX signal
+            s1 += 'QUADSPI, STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, ' + result +')},'
+            #check duplicated lines, only signal differs
+            if (prev_s == s1):
+                s1 = '|' + p[2]
+            else:
+                if len(prev_s)>0:
+                    out_file.write('\n')
+                prev_s = s1
+                s1 += '  // ' + p[2]
+            out_file.write(s1)
+    out_file.write( """\n    {NC,    NP,    0}
 };
 #endif
 """)
