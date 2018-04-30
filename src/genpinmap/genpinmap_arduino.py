@@ -2,6 +2,7 @@ import sys
 import re
 import os
 import datetime
+import json
 from xml.dom import minidom
 from xml.dom.minidom import parse, Node
 io_list = []      #'PIN','name'
@@ -543,6 +544,7 @@ def sort_my_lists():
 # START MAIN PROGRAM
 cur_dir = os.getcwd()
 out_filename = 'PeripheralPins.c'
+config_filename = 'config.json'
 
 if len(sys.argv) < 3:
     print("Usage: " + sys.argv[0] + " <BOARD_NAME> <product xml file name>")
@@ -561,47 +563,48 @@ if len(sys.argv) < 3:
     print("   for instance)")
     quit()
 
-if sys.platform.startswith('win32'):
-    #print ("Windows env")
-    cubemxdir = 'C:\Program Files\STMicroelectronics\STM32Cube\STM32CubeMX\db\mcu'
-    cubemxdirIP = cubemxdir+"\\IP\\"
-    input_file_name = cubemxdir+"\\" + sys.argv[2]
-    out_path = cur_dir+'\\Arduino\\_'+sys.argv[1]
-    output_filename = out_path+"\\"+out_filename
-else:
-    #print ("Linux env")
-    if sys.platform.startswith('linux'):
+try:
+    config_file = open(config_filename, "r")
+except IOError:
+    print("Please set your configuration in %s file" % config_filename)
+    config_file = open(config_filename, "w")
+    if sys.platform.startswith('win32'):
+        print("Platform is Windows")
+        cubemxdir = 'C:\\Program Files\\STMicroelectronics\\STM32Cube\\STM32CubeMX\\db\\mcu'
+    elif sys.platform.startswith('linux'):
+        print("Platform is Linux")
         cubemxdir = os.getenv("HOME")+'/STM32CubeMX/db/mcu'
-        cubemxdirIP = cubemxdir+"/IP/"
-        input_file_name = cubemxdir+'/'+ sys.argv[2]
-        out_path = cur_dir+'/Arduino/'+sys.argv[1]
-        output_filename = out_path+'/'+out_filename
+    elif sys.platform.startswith('darwin'):
+        print("Platform is Mac OSX")
+        cubemxdir = '/Applications/STMicroelectronics/STM32CubeMX.app/Contents/Resources/db/mcu'
     else:
-        #print ("Darwin env")
-        if sys.platform.startswith('darwin'):
-            print("Platform is Mac OSX")
-            cubemxdir = '/Applications/STMicroelectronics/STM32CubeMX.app/Contents/Resources/db/mcu'
-            cubemxdirIP = cubemxdir+"/IP/"
-            input_file_name = cubemxdir+'/'+ sys.argv[2]
-            out_path = cur_dir+'/Arduino/'+sys.argv[1]
-            output_filename = out_path+'/'+out_filename
-        else:
-            print ("Unsupported OS")
-            quit()
+        print("Platform unknown")
+        cubemxdir = '<Set CubeMX install directory>/db/mcu'
+    config_file.write(json.dumps({"CUBEMX_DIRECTORY":cubemxdir}))
+    config_file.close()
+    exit(1)
 
-#open input file
+config = json.load(config_file)
+config_file.close()
+cubemxdir = config["CUBEMX_DIRECTORY"]
+
+cubemxdirIP = os.path.join(cubemxdir, 'IP')
+input_file_name = os.path.join(cubemxdir, sys.argv[2])
+out_path = os.path.join(cur_dir, 'Arduino', sys.argv[1])
+output_filename = os.path.join(out_path, out_filename)
+
 #check input file exists
 if not(os.path.isdir(cubemxdir)):
     print ("\n ! ! ! Cube Mx seems not to be installed or not at the requested location")
     print ("\n ! ! ! please check the value you set for cubemxdir variable at the top of " + sys.argv[0] + " file")
     quit()
 if not(os.path.isfile(input_file_name)):
-    print ('\n ! ! ! '+sys.argv[2] + ' file not found')
+    print ('\n ! ! ! ' + sys.argv[2] + ' file not found')
     print ("\n ! ! ! Check in " + cubemxdir + " the correct name of this file")
     print ("\n ! ! ! You may use double quotes for this file if it contains special characters")
     quit()
 
-
+#open input file
 print ("    * * * Opening input file...")
 if not(os.path.isdir(out_path)):
     os.makedirs(out_path)
@@ -614,11 +617,10 @@ if (os.path.isfile(output_filename)):
 
 out_file = open(output_filename, 'w')
 
-
 gpiofile = find_gpio_file(xmldoc)
 if gpiofile == 'ERROR':
     quit()
-xml = parse(cubemxdirIP + 'GPIO-' + gpiofile + '_Modes.xml')
+xml = parse(os.path.join(cubemxdirIP, 'GPIO-' + gpiofile + '_Modes.xml'))
 print ("    * * * Getting pins and Ips for the xml file...")
 pinregex=r'^(P[A-Z][0-9][0-5]?)'
 for s in itemlist:
@@ -662,6 +664,7 @@ sort_my_lists()
 print ("    * * * Printing lists...")
 print_header()
 print_all_lists()
+out_file.close()
 
 nb_pin = (len(io_list))
 print ("nb of I/O pins: %i" % nb_pin)
