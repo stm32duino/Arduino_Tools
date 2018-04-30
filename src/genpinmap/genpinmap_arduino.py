@@ -30,24 +30,22 @@ canrd_list = []     #'PIN','name','CANRD'
 eth_list = []       #'PIN','name','ETH'
 qspi_list = []      #'PIN','name','QUADSPI'
 
-def find_gpio_file(xmldoc):
+def find_gpio_file():
     res = 'ERROR'
-    itemlist = xmldoc.getElementsByTagName('IP')
+    itemlist = xml_mcu.getElementsByTagName('IP')
     for s in itemlist:
         a = s.attributes['Name'].value
         if "GPIO" in a:
             res = s.attributes['Version'].value
     return res
 
-def get_gpio_af_num(xml, pintofind, iptofind):
+def get_gpio_af_num(pintofind, iptofind):
     if 'STM32F10' in mcu_file:
-        return get_gpio_af_numF1(xml, pintofind, iptofind)
-#    xml = parse('GPIO-STM32L051_gpio_v1_0_Modes.xml')
-    #xml = parse(gpiofile)
+        return get_gpio_af_numF1(pintofind, iptofind)
     #DBG print ('pin to find ' + pintofind)
     i=0
     mygpioaf = 'NOTFOUND'
-    for n in  xml.documentElement.childNodes:
+    for n in  xml_gpio.documentElement.childNodes:
         i += 1
         j = 0
         if n.nodeType == Node.ELEMENT_NODE:
@@ -82,11 +80,11 @@ def get_gpio_af_num(xml, pintofind, iptofind):
         #quit()
     return mygpioaf.replace('NOTFOUND ', '')
 
-def get_gpio_af_numF1(xml, pintofind, iptofind):
+def get_gpio_af_numF1(pintofind, iptofind):
     #print ('pin to find ' + pintofind + ' ip to find ' + iptofind)
     i=0
     mygpioaf = 'NOTFOUND'
-    for n in  xml.documentElement.childNodes:
+    for n in  xml_gpio.documentElement.childNodes:
         i += 1
         j = 0
         if n.nodeType == Node.ELEMENT_NODE:
@@ -240,35 +238,35 @@ def print_all_lists():
     if print_list_header("DAC", "DAC", daclist, "DAC"):
         print_dac()
     if print_list_header("I2C", "I2C_SDA", i2csda_list, "I2C"):
-        print_i2c(xml, i2csda_list)
+        print_i2c(i2csda_list)
     if print_list_header("", "I2C_SCL", i2cscl_list, "I2C"):
-        print_i2c(xml, i2cscl_list)
+        print_i2c(i2cscl_list)
     if print_list_header("PWM", "PWM", pwm_list, "TIM"):
-        print_pwm(xml)
+        print_pwm()
     if print_list_header("SERIAL", "UART_TX", uarttx_list, "UART"):
-        print_uart(xml, uarttx_list)
+        print_uart(uarttx_list)
     if print_list_header("", "UART_RX", uartrx_list, "UART"):
-        print_uart(xml, uartrx_list)
+        print_uart(uartrx_list)
     if print_list_header("", "UART_RTS", uartrts_list, "UART"):
-        print_uart(xml, uartrts_list)
+        print_uart(uartrts_list)
     if print_list_header("", "UART_CTS", uartcts_list, "UART"):
-        print_uart(xml, uartcts_list)
+        print_uart(uartcts_list)
     if print_list_header("SPI", "SPI_MOSI", spimosi_list, "SPI"):
-        print_spi(xml, spimosi_list)
+        print_spi(spimosi_list)
     if print_list_header("", "SPI_MISO", spimiso_list, "SPI"):
-        print_spi(xml, spimiso_list)
+        print_spi(spimiso_list)
     if print_list_header("", "SPI_SCLK", spisclk_list, "SPI"):
-        print_spi(xml, spisclk_list)
+        print_spi(spisclk_list)
     if print_list_header("", "SPI_SSEL", spissel_list, "SPI"):
-        print_spi(xml, spissel_list)
+        print_spi(spissel_list)
     if print_list_header("CAN", "CAN_RD", canrd_list, "CAN"):
-        print_can(xml, canrd_list)
+        print_can(canrd_list)
     if print_list_header("", "CAN_TD", cantd_list, "CAN"):
-        print_can(xml, cantd_list)
+        print_can(cantd_list)
     if print_list_header("ETHERNET", "Ethernet", eth_list, "ETH"):
-        print_eth(xml, eth_list)
+        print_eth()
     if print_list_header("QUADSPI", "QUADSPI", qspi_list, "QSPI"):
-        print_qspi(xml, qspi_list)
+        print_qspi()
 
 def print_list_header(comment, name, l, switch):
     if len(l)>0:
@@ -330,9 +328,9 @@ def print_dac():
 #endif
 """)
 
-def print_i2c(xml, l):
+def print_i2c(l):
     for p in l:
-        result = get_gpio_af_num(xml, p[1], p[2])
+        result = get_gpio_af_num(p[1], p[2])
         if result != 'NOTFOUND':
             s1 = "%-12s" % ("    {" + p[0] + ',')
             #2nd element is the I2C XXX signal
@@ -347,9 +345,9 @@ def print_i2c(xml, l):
 #endif
 """)
 
-def print_pwm(xml):
+def print_pwm():
     for p in pwm_list:
-        result = get_gpio_af_num(xml, p[1], p[2])
+        result = get_gpio_af_num(p[1], p[2])
         if result != 'NOTFOUND':
             s1 = "%-12s" % ("    {" + p[0] + ',')
             #2nd element is the PWM signal
@@ -374,9 +372,9 @@ def print_pwm(xml):
 #endif
 """)
 
-def print_uart(xml, l):
+def print_uart(l):
     for p in l:
-        result = get_gpio_af_num(xml, p[1], p[2])
+        result = get_gpio_af_num(p[1], p[2])
         if result != 'NOTFOUND':
             s1 = "%-12s" % ("    {" + p[0] + ',')
             #2nd element is the UART_XX signal
@@ -395,9 +393,9 @@ def print_uart(xml, l):
 #endif
 """)
 
-def print_spi(xml, l):
+def print_spi(l):
     for p in l:
-        result = get_gpio_af_num(xml, p[1], p[2])
+        result = get_gpio_af_num(p[1], p[2])
         if result != 'NOTFOUND':
             s1 = "%-12s" % ("    {" + p[0] + ',')
             #2nd element is the SPI_XXXX signal
@@ -412,10 +410,10 @@ def print_spi(xml, l):
 #endif
 """)
 
-def print_can(xml, l):
+def print_can(l):
     for p in l:
         b=p[2]
-        result = get_gpio_af_num(xml, p[1], p[2])
+        result = get_gpio_af_num(p[1], p[2])
         if result != 'NOTFOUND':
             s1 = "%-12s" % ("    {" + p[0] + ',')
             #2nd element is the CAN_XX signal
@@ -435,10 +433,10 @@ def print_can(xml, l):
 #endif
 """)
 
-def print_eth(xml, l):
+def print_eth():
     prev_s = ''
-    for p in l:
-        result = get_gpio_af_num(xml, p[1], p[2])
+    for p in eth_list:
+        result = get_gpio_af_num(p[1], p[2])
         if result != 'NOTFOUND':
             s1 = "%-12s" % ("    {" + p[0] + ',')
             #2nd element is the ETH_XXXX signal
@@ -457,10 +455,10 @@ def print_eth(xml, l):
 #endif
 """)
 
-def print_qspi(xml, l):
+def print_qspi():
     prev_s = ''
-    for p in l:
-        result = get_gpio_af_num(xml, p[1], p[2])
+    for p in qspi_list:
+        result = get_gpio_af_num(p[1], p[2])
         if result != 'NOTFOUND':
             s1 = "%-12s" % ("    {" + p[0] + ',')
             #2nd element is the QUADSPI_XXXX signal
@@ -503,8 +501,6 @@ def sort_my_lists():
     eth_list.sort(key=natural_sortkey)
     qspi_list.sort(key=natural_sortkey)
 
-    return
-
 def clean_all_lists():
     del io_list[:]
     del adclist[:]
@@ -524,7 +520,42 @@ def clean_all_lists():
     del canrd_list[:]
     del eth_list[:]
     del qspi_list[:]
-    
+
+def parse_pins():
+    print (" * Getting pins per Ips...")
+    pinregex=r'^(P[A-Z][0-9][0-5]?)'
+    itemlist = xml_mcu.getElementsByTagName('Pin')
+    for s in itemlist:
+        m = re.match(pinregex, s.attributes['Name'].value)
+        if m:
+            pin = m.group(0)[:2] + '_' + m.group(0)[2:] # pin formatted P<port>_<number>: PF_O
+            name = s.attributes['Name'].value.strip()   # full name: "PF0 / OSC_IN"
+            if s.attributes['Type'].value == "I/O":
+                store_pin(pin, name)
+            else:
+                continue
+            siglist = s.getElementsByTagName('Signal')
+            for a in siglist:
+                sig = a.attributes['Name'].value.strip()
+                if "ADC" in sig:
+                    store_adc(pin, name, sig)
+                if all(["DAC" in sig, "_OUT" in sig]):
+                    store_dac(pin, name, sig)
+                if "I2C" in sig:
+                    store_i2c(pin, name, sig)
+                if re.match('^TIM', sig) is not None: #ignore HRTIM
+                    store_pwm(pin, name, sig)
+                if re.match('^(LPU|US|U)ART', sig) is not None:
+                    store_uart(pin, name, sig)
+                if "SPI" in sig:
+                    store_spi(pin, name, sig)
+                if "CAN" in sig:
+                    store_can(pin, name, sig)
+                if "ETH" in sig:
+                    store_eth(pin, name, sig)
+                if "QUADSPI" in sig:
+                    store_qspi(pin, name, sig)
+
 # main
 cur_dir = os.getcwd()
 out_filename = 'PeripheralPins.c'
@@ -601,73 +632,35 @@ if args.list:
     quit()
 
 for mcu_file in mcu_list:
-    print("Generate %s for '%s'" % (out_filename, mcu_file))
+    print("Generating %s for '%s'..." % (out_filename, mcu_file))
     input_file_name = os.path.join(cubemxdir, mcu_file)
     out_path = os.path.join(cur_dir, 'Arduino', os.path.splitext(mcu_file)[0])
     output_filename = os.path.join(out_path, out_filename)
     if not(os.path.isdir(out_path)):
         os.makedirs(out_path)
 
-    #open input file
-    #print ("    * * * Opening input file...")
-    xmldoc = minidom.parse(input_file_name)
-    itemlist = xmldoc.getElementsByTagName('Pin')
     #open output file
     if (os.path.isfile(output_filename)):
-        #print ("    * * * * Requested %s file already exists and will be overwritten" % out_filename)
+        #print (" * Requested %s file already exists and will be overwritten" % out_filename)
         os.remove(output_filename)
-
     out_file = open(output_filename, 'w')
 
-    gpiofile = find_gpio_file(xmldoc)
+    #open input file
+    xml_mcu = parse(input_file_name)
+    gpiofile = find_gpio_file()
     if gpiofile == 'ERROR':
         print("Could not find GPIO file")
         quit()
+    xml_gpio = parse(os.path.join(cubemxdirIP, 'GPIO-' + gpiofile + '_Modes.xml'))
 
-    xml = parse(os.path.join(cubemxdirIP, 'GPIO-' + gpiofile + '_Modes.xml'))
-    print ("    * * * Getting pins and Ips for the xml file...")
-    pinregex=r'^(P[A-Z][0-9][0-5]?)'
-    for s in itemlist:
-        m = re.match(pinregex, s.attributes['Name'].value)
-        if m:
-            pin = m.group(0)[:2] + '_' + m.group(0)[2:] # pin formatted P<port>_<number>: PF_O
-            name = s.attributes['Name'].value.strip()   # full name: "PF0 / OSC_IN"
-            if s.attributes['Type'].value == "I/O":
-                store_pin(pin, name)
-            else:
-                continue
-            siglist = s.getElementsByTagName('Signal')
-            for a in siglist:
-                sig = a.attributes['Name'].value.strip()
-                if "ADC" in sig:
-                    store_adc(pin, name, sig)
-                if all(["DAC" in sig, "_OUT" in sig]):
-                    store_dac(pin, name, sig)
-                if "I2C" in sig:
-                    store_i2c(pin, name, sig)
-                if re.match('^TIM', sig) is not None: #ignore HRTIM
-                    store_pwm(pin, name, sig)
-                if re.match('^(LPU|US|U)ART', sig) is not None:
-                    store_uart(pin, name, sig)
-                if "SPI" in sig:
-                    store_spi(pin, name, sig)
-                if "CAN" in sig:
-                    store_can(pin, name, sig)
-                if "ETH" in sig:
-                    store_eth(pin, name, sig)
-                if "QUADSPI" in sig:
-                    store_qspi(pin, name, sig)
-
-    #print ("    * * * Sorting lists...")
+    parse_pins()
     sort_my_lists()
-
-    #print ("    * * * Printing lists...")
     print_header()
     print_all_lists()
 
     nb_pin = (len(io_list))
-    print ("nb of I/O pins: %i" % nb_pin)
-    print ('\n    * * * ' + mcu_file +'  OK')
+    print (" * I/O pins found: %i" % nb_pin)
+    print ("done\n")
     clean_all_lists()
 
     out_file.close()
