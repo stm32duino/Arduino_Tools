@@ -1,6 +1,6 @@
 # genpinmap
 
-By default,this script is able to generate `PeripheralPins.c` for all xml files description available in
+By default,this script is able to generate `PeripheralPins.c` and `PinNamesVar.h` for all xml files description available in
 [STM32CubeMX](http://www.st.com/en/development-tools/stm32cubemx.html) directory defined in `config.json`.
 
 After file generation, review them carefully and please report any issue
@@ -15,7 +15,7 @@ optional arguments:
 
   `-h, --help`         show this help message and exit<br>
   `-l, --list`         list available xml files description in [STM32CubeMX](http://www.st.com/en/development-tools/stm32cubemx.html)<br>
-  `-m xml, --mcu xml`  Generate `PeripheralPins.c` for specified mcu xml file description
+  `-m xml, --mcu xml`  Generate `PeripheralPins.c` and `PinNamesVar.h` for specified mcu xml file description
                        in [STM32CubeMX](http://www.st.com/en/development-tools/stm32cubemx.html).
 					 **This xml file contains non alpha characters in its name, you should call it with double quotes**
 

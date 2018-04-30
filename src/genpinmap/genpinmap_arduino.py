@@ -29,6 +29,7 @@ cantd_list = []     #'PIN','name','CANTD'
 canrd_list = []     #'PIN','name','CANRD'
 eth_list = []       #'PIN','name','ETH'
 qspi_list = []      #'PIN','name','QUADSPI'
+syswkup_list = []   #'PIN','name','SYSWKUP'
 
 def find_gpio_file():
     res = 'ERROR'
@@ -190,6 +191,11 @@ def store_eth (pin, name, signal):
 def store_qspi (pin, name, signal):
     qspi_list.append([pin,name,signal])
 
+#function to store SYS pins
+def store_sys (pin, name, signal):
+    if "_WKUP" in signal:
+        syswkup_list.append([pin,name,signal])
+
 def print_header():
     s =  ("""/*
  *******************************************************************************
@@ -229,8 +235,8 @@ def print_header():
  *       If you change them, you will have to know what you do
  * =====
  */
-""" % (datetime.datetime.now().year, os.path.basename(input_file_name), re.sub('\.c$', '', out_filename)))
-    out_file.write( s)
+""" % (datetime.datetime.now().year, os.path.basename(input_file_name), re.sub('\.c$', '', out_c_filename)))
+    out_c_file.write( s)
 
 def print_all_lists():
     if print_list_header("ADC", "ADC", adclist, "ADC"):
@@ -267,6 +273,8 @@ def print_all_lists():
         print_eth()
     if print_list_header("QUADSPI", "QUADSPI", qspi_list, "QSPI"):
         print_qspi()
+    # Print specific PinNames
+    print_syswkup()
 
 def print_list_header(comment, name, l, switch):
     if len(l)>0:
@@ -290,7 +298,7 @@ const PinMap PinMap_%s[] = {
         s+=("""
 //*** No %s ***
 """) % name
-    out_file.write(s)
+    out_c_file.write(s)
     return len(l)
 
 def print_adc():
@@ -307,8 +315,8 @@ def print_adc():
             chan = re.sub('IN[N|P]?', '', a[1])
             s1 += s_pin_data + chan
             s1 += ', 0)}, // ' + p[2] + '\n'
-            out_file.write(s1)
-    out_file.write( """    {NC,    NP,    0}
+            out_c_file.write(s1)
+    out_c_file.write( """    {NC,    NP,    0}
 };
 #endif
 """)
@@ -322,8 +330,8 @@ def print_dac():
             s1 += 'DAC1, STM_PIN_DATA_EXT(STM_MODE_ANALOG, GPIO_NOPULL, 0, ' + b[7] + ', 0)}, // ' + b + '\n'
         else:
             s1 += 'DAC' + b[3] + ', STM_PIN_DATA_EXT(STM_MODE_ANALOG, GPIO_NOPULL, 0, ' + b[8] + ', 0)}, // ' + b + '\n'
-        out_file.write(s1)
-    out_file.write( """    {NC,   NP,    0}
+        out_c_file.write(s1)
+    out_c_file.write( """    {NC,   NP,    0}
 };
 #endif
 """)
@@ -339,8 +347,8 @@ def print_i2c(l):
             r = result.split(' ')
             for af in r:
                 s2 = s1 + af  + ')},\n'
-                out_file.write(s2)
-    out_file.write( """    {NC,    NP,    0}
+                out_c_file.write(s2)
+    out_c_file.write( """    {NC,    NP,    0}
 };
 #endif
 """)
@@ -366,8 +374,8 @@ def print_pwm():
             r = result.split(' ')
             for af in r:
                 s2 = s1 + af + ', ' + chan + neg + ')},  // ' + p[2] + '\n'
-                out_file.write(s2)
-    out_file.write( """    {NC,    NP,    0}
+                out_c_file.write(s2)
+    out_c_file.write( """    {NC,    NP,    0}
 };
 #endif
 """)
@@ -387,8 +395,8 @@ def print_uart(l):
             r = result.split(' ')
             for af in r:
                 s2 = s1 + af  + ')},\n'
-                out_file.write(s2)
-    out_file.write( """    {NC,    NP,    0}
+                out_c_file.write(s2)
+    out_c_file.write( """    {NC,    NP,    0}
 };
 #endif
 """)
@@ -404,8 +412,8 @@ def print_spi(l):
             r = result.split(' ')
             for af in r:
                 s2 = s1 + af  + ')},\n'
-                out_file.write(s2)
-    out_file.write( """    {NC,    NP,    0}
+                out_c_file.write(s2)
+    out_c_file.write( """    {NC,    NP,    0}
 };
 #endif
 """)
@@ -427,8 +435,8 @@ def print_can(l):
             r = result.split(' ')
             for af in r:
                 s2 = s1 + af  + ')},\n'
-                out_file.write(s2)
-    out_file.write( """    {NC,    NP,    0}
+                out_c_file.write(s2)
+    out_c_file.write( """    {NC,    NP,    0}
 };
 #endif
 """)
@@ -446,11 +454,11 @@ def print_eth():
                 s1 = '|' + p[2]
             else:
                 if len(prev_s)>0:
-                    out_file.write('\n')
+                    out_c_file.write('\n')
                 prev_s = s1
                 s1 += '  // ' + p[2]
-            out_file.write(s1)
-    out_file.write( """\n    {NC,    NP,    0}
+            out_c_file.write(s1)
+    out_c_file.write( """\n    {NC,    NP,    0}
 };
 #endif
 """)
@@ -468,19 +476,55 @@ def print_qspi():
                 s1 = '|' + p[2]
             else:
                 if len(prev_s)>0:
-                    out_file.write('\n')
+                    out_c_file.write('\n')
                 prev_s = s1
                 s1 += '  // ' + p[2]
-            out_file.write(s1)
-    out_file.write( """\n    {NC,    NP,    0}
+            out_c_file.write(s1)
+    out_c_file.write( """\n    {NC,    NP,    0}
 };
 #endif
 """)
 
+def print_syswkup():
+    out_h_file.write("    /* SYS_WKUP */\n")
+    # H7xx and F446 start from 0, inc by 1
+    num = syswkup_list[0][2].replace("SYS_WKUP", "")
+    inc = 0
+    if num == '0':
+        inc = 1
+    # Fill list with missing SYS_WKUPx set to NC
+    i = 0
+    while i < 8:
+        num = 0
+        if len(syswkup_list) > i:
+            n = syswkup_list[i][2].replace("SYS_WKUP", "")
+            if len(n) != 0:
+                num = int(n) if inc == 1 else int(n) - 1
+        x = i if inc == 1 else i + 1
+        if num != i:
+            syswkup_list.insert(i,['NC', 'NC_' + str(x), 'SYS_WKUP'+ str(x)])
+        i += 1
+    # print pin name under switch
+    for p in syswkup_list:
+        num = p[2].replace("SYS_WKUP", "")
+        if len(num) == 0:
+            s1 = '#ifdef PWR_WAKEUP_PIN1\n'
+            s1 += '    SYS_WKUP1' #single SYS_WKUP for this product
+        else:
+            s1 = '#ifdef PWR_WAKEUP_PIN%i\n' % (int(num) + inc)
+            s1 += '    SYS_WKUP' + str(int(num) + inc)
+        s1 += ' = ' + p[0] + ','
+        if (inc == 1) and (p[0] != 'NC'):
+            s1 += ' /* ' + p[2] + ' */'
+        s1 += '\n#endif\n'
+        out_h_file.write(s1)
+
 tokenize = re.compile(r'(\d+)|(\D+)').findall
 def natural_sortkey(list_2_elem):
-
     return tuple(int(num) if num else alpha for num, alpha in tokenize(list_2_elem[0]))
+
+def natural_sortkey2(list_2_elem):
+    return tuple(int(num) if num else alpha for num, alpha in tokenize(list_2_elem[2]))
 
 def sort_my_lists():
     adclist.sort(key=natural_sortkey)
@@ -500,6 +544,7 @@ def sort_my_lists():
     canrd_list.sort(key=natural_sortkey)
     eth_list.sort(key=natural_sortkey)
     qspi_list.sort(key=natural_sortkey)
+    syswkup_list.sort(key=natural_sortkey2)
 
 def clean_all_lists():
     del io_list[:]
@@ -520,6 +565,7 @@ def clean_all_lists():
     del canrd_list[:]
     del eth_list[:]
     del qspi_list[:]
+    del syswkup_list[:]
 
 def parse_pins():
     print (" * Getting pins per Ips...")
@@ -555,10 +601,12 @@ def parse_pins():
                     store_eth(pin, name, sig)
                 if "QUADSPI" in sig:
                     store_qspi(pin, name, sig)
-
+                if "SYS_" in sig:
+                    store_sys(pin, name, sig)
 # main
 cur_dir = os.getcwd()
-out_filename = 'PeripheralPins.c'
+out_c_filename = 'PeripheralPins.c'
+out_h_filename = 'PinNamesVar.h'
 config_filename = 'config.json'
 
 try:
@@ -589,9 +637,9 @@ cubemxdir = config["CUBEMX_DIRECTORY"]
 # by default, generate for all mcu xml files description
 parser = argparse.ArgumentParser(
     description=textwrap.dedent('''\
-By default, generate %s for all xml files description available in
+By default, generate %s and %s for all xml files description available in
 STM32CubeMX directory defined in '%s':
-\t%s''' % (out_filename, config_filename, cubemxdir)),
+\t%s''' % (out_c_filename, out_h_filename, config_filename, cubemxdir)),
     epilog=textwrap.dedent('''\
 After files generation, review them carefully and please report any issue to github:
 \thttps://github.com/stm32duino/Arduino_Tools/issues\n
@@ -602,9 +650,9 @@ for instance)'''),
 group = parser.add_mutually_exclusive_group()
 group.add_argument("-l", "--list", help="list available xml files description in STM32CubeMX", action="store_true")
 group.add_argument("-m", "--mcu", metavar='xml', help=textwrap.dedent('''\
-Generate %s for specified mcu xml file description
+Generate %s and %s for specified mcu xml file description
 in STM32CubeMX. This xml file contains non alpha characters in
-its name, you should call it with double quotes''' % out_filename))
+its name, you should call it with double quotes''' % (out_c_filename, out_h_filename)))
 args = parser.parse_args()
 
 if not(os.path.isdir(cubemxdir)):
@@ -632,18 +680,23 @@ if args.list:
     quit()
 
 for mcu_file in mcu_list:
-    print("Generating %s for '%s'..." % (out_filename, mcu_file))
+    print("Generating %s and %s for '%s'..." % (out_c_filename, out_h_filename, mcu_file))
     input_file_name = os.path.join(cubemxdir, mcu_file)
     out_path = os.path.join(cur_dir, 'Arduino', os.path.splitext(mcu_file)[0])
-    output_filename = os.path.join(out_path, out_filename)
+    output_c_filename = os.path.join(out_path, out_c_filename)
+    output_h_filename = os.path.join(out_path, out_h_filename)
     if not(os.path.isdir(out_path)):
         os.makedirs(out_path)
 
     #open output file
-    if (os.path.isfile(output_filename)):
-        #print (" * Requested %s file already exists and will be overwritten" % out_filename)
-        os.remove(output_filename)
-    out_file = open(output_filename, 'w')
+    if (os.path.isfile(output_c_filename)):
+        #print (" * Requested %s file already exists and will be overwritten" % out_c_filename)
+        os.remove(output_c_filename)
+    out_c_file = open(output_c_filename, 'w')
+    if (os.path.isfile(output_h_filename)):
+        #print (" * Requested %s file already exists and will be overwritten" % out_h_filename)
+        os.remove(output_h_filename)
+    out_h_file = open(output_h_filename, 'w')
 
     #open input file
     xml_mcu = parse(input_file_name)
@@ -663,4 +716,5 @@ for mcu_file in mcu_list:
     print ("done\n")
     clean_all_lists()
 
-    out_file.close()
+    out_c_file.close()
+    out_h_file.close()
