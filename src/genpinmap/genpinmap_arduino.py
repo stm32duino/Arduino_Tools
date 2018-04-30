@@ -1,11 +1,17 @@
-import sys
-import re
-import os
+import argparse
 import datetime
+import fnmatch
 import json
+import os
+import re
+import sys
+import textwrap
 from xml.dom import minidom
 from xml.dom.minidom import parse, Node
-io_list = []      #'PIN','name'
+from argparse import RawTextHelpFormatter
+mcu_file=""
+mcu_list = []       #'name'
+io_list = []        #'PIN','name'
 adclist = []        #'PIN','name','ADCSignal'
 daclist = []        #'PIN','name','DACSignal'
 i2cscl_list = []    #'PIN','name','I2CSCLSignal'
@@ -24,7 +30,6 @@ canrd_list = []     #'PIN','name','CANRD'
 eth_list = []       #'PIN','name','ETH'
 qspi_list = []      #'PIN','name','QUADSPI'
 
-
 def find_gpio_file(xmldoc):
     res = 'ERROR'
     itemlist = xmldoc.getElementsByTagName('IP')
@@ -35,7 +40,7 @@ def find_gpio_file(xmldoc):
     return res
 
 def get_gpio_af_num(xml, pintofind, iptofind):
-    if 'STM32F10' in sys.argv[2]:
+    if 'STM32F10' in mcu_file:
         return get_gpio_af_numF1(xml, pintofind, iptofind)
 #    xml = parse('GPIO-STM32L051_gpio_v1_0_Modes.xml')
     #xml = parse(gpiofile)
@@ -397,7 +402,7 @@ def print_uart(xml, l):
                 #2nd element is the UART_XX signal
                 b=p[2].split('_')[0]
                 s1 += "%-9s" % (b[:len(b)-1] +  b[len(b)-1:] + ',')
-                if 'STM32F10' in sys.argv[2] and l == uartrx_list:
+                if 'STM32F10' in mcu_file and l == uartrx_list:
                     s1 += 'STM_PIN_DATA(STM_MODE_INPUT, GPIO_PULLUP, '
                 else:
                     s1 += 'STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, '
@@ -447,7 +452,7 @@ def print_can(xml, l):
                 instance = p[2].split('_')[0].replace("CAN", "")
                 if len(instance) == 0:
                     instance = '1'
-                if 'STM32F10' in sys.argv[2] and l == canrd_list:
+                if 'STM32F10' in mcu_file and l == canrd_list:
                     s1 += 'CAN' + instance + ', STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, '
                 else:
                     s1 += 'CAN' + instance + ', STM_PIN_DATA(STM_MODE_AF_PP, GPIO_NOPULL, '
@@ -541,32 +546,35 @@ def sort_my_lists():
 
     return
 
-# START MAIN PROGRAM
+def clean_all_lists():
+    del io_list[:]
+    del adclist[:]
+    del daclist[:]
+    del i2cscl_list[:]
+    del i2csda_list[:]
+    del pwm_list[:]
+    del uarttx_list[:]
+    del uartrx_list[:]
+    del uartcts_list[:]
+    del uartrts_list[:]
+    del spimosi_list[:]
+    del spimiso_list[:]
+    del spissel_list[:]
+    del spisclk_list[:]
+    del cantd_list[:]
+    del canrd_list[:]
+    del eth_list[:]
+    del qspi_list[:]
+    
+# main
 cur_dir = os.getcwd()
 out_filename = 'PeripheralPins.c'
 config_filename = 'config.json'
 
-if len(sys.argv) < 3:
-    print("Usage: " + sys.argv[0] + " <BOARD_NAME> <product xml file name>")
-    print("   - <BOARD_NAME> is the name of the board as it will be named in mbed")
-    print("   - <product xml file name> is the STM32 file description in Cube MX")
-    print("   !!This xml file contains non alpha characters in its name, you should call it with quotes")
-    print("")
-    print("   This script is able to generate the %s for a specific board" % out_filename )
-    print("   After file generation, review it carefully and ")
-    print("   please report any issue to github:")
-    print("   https://github.com/fpistm/stm32_tools/issues")
-    print("")
-    print("   Once generated, you should comment a line if the pin is generated ")
-    print("   several times for the same IP")
-    print("   or if the pin should not be used (overlaid with some HW on the board, ")
-    print("   for instance)")
-    quit()
-
 try:
     config_file = open(config_filename, "r")
 except IOError:
-    print("Please set your configuration in %s file" % config_filename)
+    print("Please set your configuration in '%s' file" % config_filename)
     config_file = open(config_filename, "w")
     if sys.platform.startswith('win32'):
         print("Platform is Windows")
@@ -588,84 +596,119 @@ config = json.load(config_file)
 config_file.close()
 cubemxdir = config["CUBEMX_DIRECTORY"]
 
-cubemxdirIP = os.path.join(cubemxdir, 'IP')
-input_file_name = os.path.join(cubemxdir, sys.argv[2])
-out_path = os.path.join(cur_dir, 'Arduino', sys.argv[1])
-output_filename = os.path.join(out_path, out_filename)
+# by default, generate for all mcu xml files description
+parser = argparse.ArgumentParser(
+    description=textwrap.dedent('''\
+By default, generate %s for all xml files description available in
+STM32CubeMX directory defined in '%s':
+\t%s''' % (out_filename, config_filename, cubemxdir)),
+    epilog=textwrap.dedent('''\
+After files generation, review them carefully and please report any issue to github:
+\thttps://github.com/stm32duino/Arduino_Tools/issues\n
+Once generated, you have to comment a line if the pin is generated several times
+for the same IP or if the pin should not be used (overlaid with some HW on the board,
+for instance)'''),
+    formatter_class=RawTextHelpFormatter)
+group = parser.add_mutually_exclusive_group()
+group.add_argument("-l", "--list", help="list available xml files description in STM32CubeMX", action="store_true")
+group.add_argument("-m", "--mcu", metavar='xml', help=textwrap.dedent('''\
+Generate %s for specified mcu xml file description
+in STM32CubeMX. This xml file contains non alpha characters in
+its name, you should call it with double quotes''' % out_filename))
+args = parser.parse_args()
 
-#check input file exists
 if not(os.path.isdir(cubemxdir)):
     print ("\n ! ! ! Cube Mx seems not to be installed or not at the requested location")
-    print ("\n ! ! ! please check the value you set for cubemxdir variable at the top of " + sys.argv[0] + " file")
-    quit()
-if not(os.path.isfile(input_file_name)):
-    print ('\n ! ! ! ' + sys.argv[2] + ' file not found')
-    print ("\n ! ! ! Check in " + cubemxdir + " the correct name of this file")
-    print ("\n ! ! ! You may use double quotes for this file if it contains special characters")
+    print ("\n ! ! ! please check the value you set for 'CUBEMX_DIRECTORY' in '%s' file" % config_filename)
     quit()
 
-#open input file
-print ("    * * * Opening input file...")
-if not(os.path.isdir(out_path)):
-    os.makedirs(out_path)
-xmldoc = minidom.parse(input_file_name)
-itemlist = xmldoc.getElementsByTagName('Pin')
-#open output file
-if (os.path.isfile(output_filename)):
-    print ("    * * * * Requested %s file already exists and will be overwritten" % out_filename)
-    os.remove(output_filename)
+cubemxdirIP = os.path.join(cubemxdir, 'IP')
 
-out_file = open(output_filename, 'w')
+if args.mcu:
+    #check input file exists
+    if not(os.path.isfile(os.path.join(cubemxdir, args.mcu))):
+        print ("\n ! ! ! " + args.mcu + " file not found")
+        print ("\n ! ! ! Check in " + cubemxdir + " the correct name of this file")
+        print ("\n ! ! ! You may use double quotes for this file if it contains special characters")
+        quit()
+    mcu_list.append(args.mcu)
+else:
+    mcu_list=fnmatch.filter(os.listdir(cubemxdir), 'STM32*.xml')
 
-gpiofile = find_gpio_file(xmldoc)
-if gpiofile == 'ERROR':
+if args.list:
+    print("Available xml files description: %i" % len(mcu_list))
+    for f in mcu_list:
+        print(f)
     quit()
-xml = parse(os.path.join(cubemxdirIP, 'GPIO-' + gpiofile + '_Modes.xml'))
-print ("    * * * Getting pins and Ips for the xml file...")
-pinregex=r'^(P[A-Z][0-9][0-5]?)'
-for s in itemlist:
-    m = re.match(pinregex, s.attributes['Name'].value)
-    if m:
-        pin = m.group(0)[:2] + '_' + m.group(0)[2:] # pin formatted P<port>_<number>: PF_O
-        name = s.attributes['Name'].value.strip()   # full name: "PF0 / OSC_IN"
-        if s.attributes['Type'].value == "I/O":
-            store_pin(pin, name)
-        else:
-            continue
-        siglist = s.getElementsByTagName('Signal')
-        for a in siglist:
-            sig = a.attributes['Name'].value.strip()
-            if "ADC" in sig:
-                #store ADC pin
-                store_adc(pin, name, sig)
-            if all(["DAC" in sig, "_OUT" in sig]):
-                #store DAC
-                store_dac(pin, name, sig)
-            if "I2C" in sig:
-                #store DAC
-                store_i2c(pin, name, sig)
-            if re.match('^TIM', sig) is not None: #ignore HRTIM
-                #store PWM
-                store_pwm(pin, name, sig)
-            if re.match('^(LPU|US|U)ART', sig) is not None:
-                store_uart(pin, name, sig)
-            if "SPI" in sig:
-                store_spi(pin, name, sig)
-            if "CAN" in sig:
-                store_can(pin, name, sig)
-            if "ETH" in sig:
-                store_eth(pin, name, sig)
-            if "QUADSPI" in sig:
-                store_qspi(pin, name, sig)
 
-print ("    * * * Sorting lists...")
-sort_my_lists()
+for mcu_file in mcu_list:
+    print("Generate %s for '%s'" % (out_filename, mcu_file))
+    input_file_name = os.path.join(cubemxdir, mcu_file)
+    out_path = os.path.join(cur_dir, 'Arduino', os.path.splitext(mcu_file)[0])
+    output_filename = os.path.join(out_path, out_filename)
+    if not(os.path.isdir(out_path)):
+        os.makedirs(out_path)
 
-print ("    * * * Printing lists...")
-print_header()
-print_all_lists()
-out_file.close()
+    #open input file
+    #print ("    * * * Opening input file...")
+    xmldoc = minidom.parse(input_file_name)
+    itemlist = xmldoc.getElementsByTagName('Pin')
+    #open output file
+    if (os.path.isfile(output_filename)):
+        #print ("    * * * * Requested %s file already exists and will be overwritten" % out_filename)
+        os.remove(output_filename)
 
-nb_pin = (len(io_list))
-print ("nb of I/O pins: %i" % nb_pin)
-print ('\n    * * * ' + sys.argv[1]+'  OK')
+    out_file = open(output_filename, 'w')
+
+    gpiofile = find_gpio_file(xmldoc)
+    if gpiofile == 'ERROR':
+        print("Could not find GPIO file")
+        quit()
+
+    xml = parse(os.path.join(cubemxdirIP, 'GPIO-' + gpiofile + '_Modes.xml'))
+    print ("    * * * Getting pins and Ips for the xml file...")
+    pinregex=r'^(P[A-Z][0-9][0-5]?)'
+    for s in itemlist:
+        m = re.match(pinregex, s.attributes['Name'].value)
+        if m:
+            pin = m.group(0)[:2] + '_' + m.group(0)[2:] # pin formatted P<port>_<number>: PF_O
+            name = s.attributes['Name'].value.strip()   # full name: "PF0 / OSC_IN"
+            if s.attributes['Type'].value == "I/O":
+                store_pin(pin, name)
+            else:
+                continue
+            siglist = s.getElementsByTagName('Signal')
+            for a in siglist:
+                sig = a.attributes['Name'].value.strip()
+                if "ADC" in sig:
+                    store_adc(pin, name, sig)
+                if all(["DAC" in sig, "_OUT" in sig]):
+                    store_dac(pin, name, sig)
+                if "I2C" in sig:
+                    store_i2c(pin, name, sig)
+                if re.match('^TIM', sig) is not None: #ignore HRTIM
+                    store_pwm(pin, name, sig)
+                if re.match('^(LPU|US|U)ART', sig) is not None:
+                    store_uart(pin, name, sig)
+                if "SPI" in sig:
+                    store_spi(pin, name, sig)
+                if "CAN" in sig:
+                    store_can(pin, name, sig)
+                if "ETH" in sig:
+                    store_eth(pin, name, sig)
+                if "QUADSPI" in sig:
+                    store_qspi(pin, name, sig)
+
+    #print ("    * * * Sorting lists...")
+    sort_my_lists()
+
+    #print ("    * * * Printing lists...")
+    print_header()
+    print_all_lists()
+
+    nb_pin = (len(io_list))
+    print ("nb of I/O pins: %i" % nb_pin)
+    print ('\n    * * * ' + mcu_file +'  OK')
+    clean_all_lists()
+
+    out_file.close()
