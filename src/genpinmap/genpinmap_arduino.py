@@ -531,6 +531,7 @@ def sort_my_lists():
     daclist.sort(key=natural_sortkey)
     i2cscl_list.sort(key=natural_sortkey)
     i2csda_list.sort(key=natural_sortkey)
+    pwm_list.sort(key=natural_sortkey2)
     pwm_list.sort(key=natural_sortkey)
     uarttx_list.sort(key=natural_sortkey)
     uartrx_list.sort(key=natural_sortkey)
