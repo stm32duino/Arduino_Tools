@@ -6,7 +6,6 @@ import os
 import re
 import sys
 import textwrap
-from xml.dom import minidom
 from xml.dom.minidom import parse, Node
 from argparse import RawTextHelpFormatter
 
@@ -64,7 +63,7 @@ def get_gpio_af_num(pintofind, iptofind):
                         if m.nodeType == Node.ELEMENT_NODE:
                             for secondlevel in m.attributes.items():
                                 k += 1
-                                #                                if 'I2C1_SDA' in secondlevel:
+                                # if 'I2C1_SDA' in secondlevel:
                                 if iptofind in secondlevel:
                                     # DBG print (i, j,  m.attributes.items())
                                     # m = IP node found
@@ -115,7 +114,7 @@ def get_gpio_af_numF1(pintofind, iptofind):
                             for secondlevel in m.attributes.items():
                                 # print ('secondlevel ' , i, j, k , secondlevel)
                                 k += 1
-                                #                                if 'I2C1_SDA' in secondlevel:
+                                # if 'I2C1_SDA' in secondlevel:
                                 if iptofind in secondlevel:
                                     # m = IP node found
                                     # print (i, j,  m.attributes.items())
@@ -123,14 +122,14 @@ def get_gpio_af_numF1(pintofind, iptofind):
                                         # p node 'RemapBlock'
                                         if (
                                             p.nodeType == Node.ELEMENT_NODE
-                                            and p.hasChildNodes() == False
+                                            and p.hasChildNodes() is False
                                         ):
                                             mygpioaf += " AFIO_NONE"
                                         else:
                                             for s in p.childNodes:
                                                 if s.nodeType == Node.ELEMENT_NODE:
                                                     # s node 'Specific parameter'
-                                                    # DBG print (i,j,k,p.attributes.items())
+                                                    # print (i,j,k,p.attributes.items())
                                                     for myc in s.childNodes:
                                                         # DBG print (myc)
                                                         if (
@@ -282,7 +281,7 @@ def print_header():
 """ % (
         datetime.datetime.now().year,
         os.path.basename(input_file_name),
-        re.sub("\.c$", "", out_c_filename),
+        re.sub("\\.c$", "", out_c_filename),
     )
     out_c_file.write(s)
 
@@ -427,8 +426,8 @@ def print_dac():
     )
 
 
-def print_i2c(l):
-    for p in l:
+def print_i2c(lst):
+    for p in lst:
         result = get_gpio_af_num(p[1], p[2])
         if result != "NOTFOUND":
             s1 = "%-12s" % ("    {" + p[0] + ",")
@@ -481,15 +480,15 @@ def print_pwm():
     )
 
 
-def print_uart(l):
-    for p in l:
+def print_uart(lst):
+    for p in lst:
         result = get_gpio_af_num(p[1], p[2])
         if result != "NOTFOUND":
             s1 = "%-12s" % ("    {" + p[0] + ",")
             # 2nd element is the UART_XX signal
             b = p[2].split("_")[0]
             s1 += "%-9s" % (b[: len(b) - 1] + b[len(b) - 1 :] + ",")
-            if "STM32F10" in mcu_file and l == uartrx_list:
+            if "STM32F10" in mcu_file and lst == uartrx_list:
                 s1 += "STM_PIN_DATA(STM_MODE_INPUT, GPIO_PULLUP, "
             else:
                 s1 += "STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, "
@@ -505,8 +504,8 @@ def print_uart(l):
     )
 
 
-def print_spi(l):
-    for p in l:
+def print_spi(lst):
+    for p in lst:
         result = get_gpio_af_num(p[1], p[2])
         if result != "NOTFOUND":
             s1 = "%-12s" % ("    {" + p[0] + ",")
@@ -525,9 +524,8 @@ def print_spi(l):
     )
 
 
-def print_can(l):
-    for p in l:
-        b = p[2]
+def print_can(lst):
+    for p in lst:
         result = get_gpio_af_num(p[1], p[2])
         if result != "NOTFOUND":
             s1 = "%-12s" % ("    {" + p[0] + ",")
@@ -535,7 +533,7 @@ def print_can(l):
             instance = p[2].split("_")[0].replace("CAN", "")
             if len(instance) == 0:
                 instance = "1"
-            if "STM32F10" in mcu_file and l == canrd_list:
+            if "STM32F10" in mcu_file and lst == canrd_list:
                 s1 += "CAN" + instance + ", STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, "
             else:
                 s1 += "CAN" + instance + ", STM_PIN_DATA(STM_MODE_AF_PP, GPIO_NOPULL, "
@@ -807,9 +805,9 @@ its name, you should call it with double quotes"""
 args = parser.parse_args()
 
 if not (os.path.isdir(cubemxdir)):
-    print("\n ! ! ! Cube Mx seems not to be installed or not at the requested location")
+    print("\nCube Mx seems not to be installed or not at the requested location.")
     print(
-        "\n ! ! ! please check the value you set for 'CUBEMX_DIRECTORY' in '%s' file"
+        "\nPlease check the value you set for 'CUBEMX_DIRECTORY' in '%s' file."
         % config_filename
     )
     quit()
@@ -819,10 +817,10 @@ cubemxdirIP = os.path.join(cubemxdir, "IP")
 if args.mcu:
     # check input file exists
     if not (os.path.isfile(os.path.join(cubemxdir, args.mcu))):
-        print("\n ! ! ! " + args.mcu + " file not found")
-        print("\n ! ! ! Check in " + cubemxdir + " the correct name of this file")
+        print("\n" + args.mcu + " file not found")
+        print("\nCheck in " + cubemxdir + " the correct name of this file")
         print(
-            "\n ! ! ! You may use double quotes for this file if it contains special characters"
+            "\nYou may use double quotes for file containing special characters"
         )
         quit()
     mcu_list.append(args.mcu)
@@ -848,11 +846,9 @@ for mcu_file in mcu_list:
 
     # open output file
     if os.path.isfile(output_c_filename):
-        # print (" * Requested %s file already exists and will be overwritten" % out_c_filename)
         os.remove(output_c_filename)
     out_c_file = open(output_c_filename, "w")
     if os.path.isfile(output_h_filename):
-        # print (" * Requested %s file already exists and will be overwritten" % out_h_filename)
         os.remove(output_h_filename)
     out_h_file = open(output_h_filename, "w")
 
