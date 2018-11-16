@@ -373,7 +373,13 @@ const PinMap PinMap_%s[] = {
 
 def print_adc():
     # Check GPIO version (alternate or not)
-    s_pin_data = "STM_PIN_DATA_EXT(STM_MODE_ANALOG, GPIO_NOPULL, 0, "
+    s_pin_data = "STM_PIN_DATA_EXT(STM_MODE_ANALOG"
+    # For STM32L47xxx/48xxx, it is necessary to configure
+    # the GPIOx_ASCR register
+    if re.match("STM32L4[78]+", mcu_file):
+        s_pin_data += "_ADC_CONTROL"
+    s_pin_data += ", GPIO_NOPULL, 0, "
+
     for p in adclist:
         if "IN" in p[2]:
             s1 = "%-12s" % ("    {" + p[0] + ",")
