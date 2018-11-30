@@ -30,6 +30,9 @@ canrd_list = []  # 'PIN','name','CANRD'
 eth_list = []  # 'PIN','name','ETH'
 qspi_list = []  # 'PIN','name','QUADSPI'
 syswkup_list = []  # 'PIN','name','SYSWKUP'
+usb_list = []  # 'PIN','name','USB'
+usb_otgfs_list = []  # 'PIN','name','USB'
+usb_otghs_list = []  # 'PIN','name','USB'
 
 
 def find_gpio_file():
@@ -239,6 +242,16 @@ def store_sys(pin, name, signal):
         syswkup_list.append([pin, name, signal])
 
 
+# function to store USB pins
+def store_usb(pin, name, signal):
+    if "OTG" not in signal:
+        usb_list.append([pin, name, signal])
+    if signal.startswith("USB_OTG_FS"):
+        usb_otgfs_list.append([pin, name, signal])
+    if signal.startswith("USB_OTG_HS"):
+        usb_otghs_list.append([pin, name, signal])
+
+
 def print_header():
     s = """/*
  *******************************************************************************
@@ -287,88 +300,102 @@ def print_header():
 
 
 def print_all_lists():
-    if print_list_header("ADC", "ADC", adclist, "ADC"):
+    if print_list_header("ADC", "ADC", "ADC", adclist):
         print_adc()
-    if print_list_header("DAC", "DAC", daclist, "DAC"):
+    if print_list_header("DAC", "DAC", "DAC", daclist):
         print_dac()
-    if print_list_header("I2C", "I2C_SDA", i2csda_list, "I2C"):
+    if print_list_header("I2C", "I2C_SDA", "I2C", i2csda_list, i2cscl_list):
         print_i2c(i2csda_list)
-    if print_list_header("", "I2C_SCL", i2cscl_list, "I2C"):
-        print_i2c(i2cscl_list)
-    if print_list_header("PWM", "PWM", pwm_list, "TIM"):
+        if print_list_header("", "I2C_SCL", "I2C", i2cscl_list):
+            print_i2c(i2cscl_list)
+    if print_list_header("PWM", "PWM", "TIM", pwm_list):
         print_pwm()
-    if print_list_header("SERIAL", "UART_TX", uarttx_list, "UART"):
+    if print_list_header(
+        "SERIAL",
+        "UART_TX",
+        "UART",
+        uarttx_list,
+        uartrx_list,
+        uartrts_list,
+        uartcts_list,
+    ):
         print_uart(uarttx_list)
-    if print_list_header("", "UART_RX", uartrx_list, "UART"):
-        print_uart(uartrx_list)
-    if print_list_header("", "UART_RTS", uartrts_list, "UART"):
-        print_uart(uartrts_list)
-    if print_list_header("", "UART_CTS", uartcts_list, "UART"):
-        print_uart(uartcts_list)
-    if print_list_header("SPI", "SPI_MOSI", spimosi_list, "SPI"):
+        if print_list_header("", "UART_RX", "UART", uartrx_list):
+            print_uart(uartrx_list)
+        if print_list_header("", "UART_RTS", "UART", uartrts_list):
+            print_uart(uartrts_list)
+        if print_list_header("", "UART_CTS", "UART", uartcts_list):
+            print_uart(uartcts_list)
+    if print_list_header(
+        "SPI", "SPI_MOSI", "SPI", spimosi_list, spimiso_list, spisclk_list, spissel_list
+    ):
         print_spi(spimosi_list)
-    if print_list_header("", "SPI_MISO", spimiso_list, "SPI"):
-        print_spi(spimiso_list)
-    if print_list_header("", "SPI_SCLK", spisclk_list, "SPI"):
-        print_spi(spisclk_list)
-    if print_list_header("", "SPI_SSEL", spissel_list, "SPI"):
-        print_spi(spissel_list)
-    if print_list_header("CAN", "CAN_RD", canrd_list, "CAN"):
+        if print_list_header("", "SPI_MISO", "SPI", spimiso_list):
+            print_spi(spimiso_list)
+        if print_list_header("", "SPI_SCLK", "SPI", spisclk_list):
+            print_spi(spisclk_list)
+        if print_list_header("", "SPI_SSEL", "SPI", spissel_list):
+            print_spi(spissel_list)
+    if print_list_header("CAN", "CAN_RD", "CAN", canrd_list, cantd_list):
         print_can(canrd_list)
-    if print_list_header("", "CAN_TD", cantd_list, "CAN"):
-        print_can(cantd_list)
-    if print_list_header("ETHERNET", "Ethernet", eth_list, "ETH"):
+        if print_list_header("", "CAN_TD", "CAN", cantd_list):
+            print_can(cantd_list)
+    if print_list_header("ETHERNET", "Ethernet", "ETH", eth_list):
         print_eth()
-    if print_list_header("QUADSPI", "QUADSPI", qspi_list, "QSPI"):
+    if print_list_header("QUADSPI", "QUADSPI", "QSPI", qspi_list):
         print_qspi()
-    # Print specific PinNames
-    print_syswkup()
+    if print_list_header("USB", "USB", "PCD", usb_list, usb_otgfs_list, usb_otghs_list):
+        print_usb(usb_list)
+        if print_list_header("", "USB_OTG_FS", "PCD", usb_otgfs_list):
+            print_usb(usb_otgfs_list)
+        if print_list_header("", "USB_OTG_HS", "PCD", usb_otghs_list):
+            print_usb(usb_otghs_list)
+    # Print specific PinNames in header file
+    print_syswkup_h()
+    print_usb_h()
 
 
-def print_list_header(comment, name, l, switch):
-    if len(l) > 0:
-        if comment:
+def print_list_header(feature, lname, switch, *argslst):
+    lenlst = 0
+    for lst in argslst:
+        lenlst += len(lst)
+    if lenlst > 0:
+        # There is data for the feature
+        if feature:
             s = (
                 (
                     """
 //*** %s ***
 """
                 )
-                % comment
+                % feature
             )
         else:
             s = ""
-        s += (
-            (
-                """
+        # Only for the first list
+        if argslst[0]:
+            s += (
+                (
+                    """
 #ifdef HAL_%s_MODULE_ENABLED
 const PinMap PinMap_%s[] = {
 """
-            )
-            % (switch, name)
-        )
-    else:
-        if comment:
-            s = (
-                (
-                    """
-//*** %s ***
-"""
                 )
-                % comment
+                % (switch, lname)
             )
-        else:
-            s = ""
-        s += (
+    else:
+        # No data for the feature or the list
+        s = (
             (
                 """
 //*** No %s ***
 """
             )
-            % name
+            % (feature if feature else lname)
         )
+
     out_c_file.write(s)
-    return len(l)
+    return lenlst
 
 
 def print_adc():
@@ -425,7 +452,7 @@ def print_dac():
             )
         out_c_file.write(s1)
     out_c_file.write(
-        """  {NC,   NP,    0}
+        """  {NC,    NP,    0}
 };
 #endif
 """
@@ -476,7 +503,7 @@ def print_pwm():
             s1 += "STM_PIN_DATA_EXT(STM_MODE_AF_PP, GPIO_PULLUP, "
             r = result.split(" ")
             for af in r:
-                s2 = s1 + af + ", " + chan + neg + ")},  // " + p[2] + "\n"
+                s2 = s1 + af + ", " + chan + neg + ")}, // " + p[2] + "\n"
                 out_c_file.write(s2)
     out_c_file.write(
         """  {NC,    NP,    0}
@@ -570,7 +597,7 @@ def print_eth():
                 if len(prev_s) > 0:
                     out_c_file.write("\n")
                 prev_s = s1
-                s1 += "  // " + p[2]
+                s1 += " // " + p[2]
             out_c_file.write(s1)
     out_c_file.write(
         """\n  {NC,    NP,    0}
@@ -595,7 +622,7 @@ def print_qspi():
                 if len(prev_s) > 0:
                     out_c_file.write("\n")
                 prev_s = s1
-                s1 += "  // " + p[2]
+                s1 += " // " + p[2]
             out_c_file.write(s1)
     out_c_file.write(
         """\n  {NC,    NP,    0}
@@ -605,7 +632,7 @@ def print_qspi():
     )
 
 
-def print_syswkup():
+def print_syswkup_h():
     out_h_file.write("  /* SYS_WKUP */\n")
     # H7xx and F446 start from 0, inc by 1
     num = syswkup_list[0][2].replace("SYS_WKUP", "")
@@ -640,6 +667,63 @@ def print_syswkup():
         out_h_file.write(s1)
 
 
+def print_usb(lst):
+    use_hs_in_fs = False
+    inst = "USB"
+    if lst == usb_otgfs_list:
+        inst = "USB_OTG_FS"
+    elif lst == usb_otghs_list:
+        inst = "USB_OTG_HS"
+
+    for p in lst:
+        result = get_gpio_af_num(p[1], p[2])
+        s1 = "%-10s" % ("  {" + p[0] + ",")
+        if lst == usb_otghs_list:
+            if "ULPI" not in p[2] and not use_hs_in_fs:
+                out_c_file.write("#ifdef USE_USB_HS_IN_FS\n")
+                use_hs_in_fs = True
+            if "ULPI" in p[2] and use_hs_in_fs:
+                out_c_file.write("#endif /* USE_USB_HS_IN_FS */\n")
+                use_hs_in_fs = False
+
+        # 2nd element is the USB_XXXX signal
+        if not p[2].startswith("USB_D") and "VBUS" not in p[2]:
+            if "ID" not in p[2]:
+                s1 += inst + ", STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, "
+            else:
+                # ID pin: AF_PP + PULLUP
+                s1 += inst + ", STM_PIN_DATA(STM_MODE_AF_OD, GPIO_PULLUP, "
+        else:
+            # USB_DM/DP and VBUS: INPUT + NOPULL
+            s1 += inst + ", STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, "
+        if result == "NOTFOUND":
+            s1 += "0)},"
+        else:
+            r = result.split(" ")
+            for af in r:
+                s1 += af + ")},"
+        s1 += " // " + p[2] + "\n"
+        out_c_file.write(s1)
+    if lst:
+        if use_hs_in_fs:
+            out_c_file.write("#endif /* USE_USB_HS_IN_FS */\n")
+        out_c_file.write(
+            """  {NC,    NP,    0}
+};
+#endif
+"""
+        )
+
+
+def print_usb_h():
+    if usb_list or usb_otgfs_list or usb_otghs_list:
+        out_h_file.write("  /* USB */\n")
+        out_h_file.write("#ifdef USBCON\n")
+        for p in usb_list + usb_otgfs_list + usb_otghs_list:
+            out_h_file.write("  " + p[2] + " = " + p[0] + ",\n")
+        out_h_file.write("#endif\n")
+
+
 tokenize = re.compile(r"(\d+)|(\D+)").findall
 
 
@@ -671,6 +755,9 @@ def sort_my_lists():
     eth_list.sort(key=natural_sortkey)
     qspi_list.sort(key=natural_sortkey)
     syswkup_list.sort(key=natural_sortkey2)
+    usb_list.sort(key=natural_sortkey)
+    usb_otgfs_list.sort(key=natural_sortkey)
+    usb_otghs_list.sort(key=natural_sortkey)
 
 
 def clean_all_lists():
@@ -693,6 +780,9 @@ def clean_all_lists():
     del eth_list[:]
     del qspi_list[:]
     del syswkup_list[:]
+    del usb_list[:]
+    del usb_otgfs_list[:]
+    del usb_otghs_list[:]
 
 
 def parse_pins():
@@ -733,6 +823,8 @@ def parse_pins():
                     store_qspi(pin, name, sig)
                 if "SYS_" in sig:
                     store_sys(pin, name, sig)
+                if "USB" in sig:
+                    store_usb(pin, name, sig)
 
 
 # main
@@ -825,9 +917,7 @@ if args.mcu:
     if not (os.path.isfile(os.path.join(cubemxdir, args.mcu))):
         print("\n" + args.mcu + " file not found")
         print("\nCheck in " + cubemxdir + " the correct name of this file")
-        print(
-            "\nYou may use double quotes for file containing special characters"
-        )
+        print("\nYou may use double quotes for file containing special characters")
         quit()
     mcu_list.append(args.mcu)
 else:
