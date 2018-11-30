@@ -382,7 +382,7 @@ def print_adc():
 
     for p in adclist:
         if "IN" in p[2]:
-            s1 = "%-12s" % ("    {" + p[0] + ",")
+            s1 = "%-10s" % ("  {" + p[0] + ",")
             a = p[2].split("_")
             inst = a[0].replace("ADC", "")
             if len(inst) == 0:
@@ -393,7 +393,7 @@ def print_adc():
             s1 += ", 0)}, // " + p[2] + "\n"
             out_c_file.write(s1)
     out_c_file.write(
-        """    {NC,    NP,    0}
+        """  {NC,    NP,    0}
 };
 #endif
 """
@@ -403,7 +403,7 @@ def print_adc():
 def print_dac():
     for p in daclist:
         b = p[2]
-        s1 = "%-12s" % ("    {" + p[0] + ",")
+        s1 = "%-10s" % ("  {" + p[0] + ",")
         # 2nd element is the DAC signal
         if b[3] == "_":  # 1 DAC in this chip
             s1 += (
@@ -425,7 +425,7 @@ def print_dac():
             )
         out_c_file.write(s1)
     out_c_file.write(
-        """    {NC,   NP,    0}
+        """  {NC,   NP,    0}
 };
 #endif
 """
@@ -436,7 +436,7 @@ def print_i2c(lst):
     for p in lst:
         result = get_gpio_af_num(p[1], p[2])
         if result != "NOTFOUND":
-            s1 = "%-12s" % ("    {" + p[0] + ",")
+            s1 = "%-10s" % ("  {" + p[0] + ",")
             # 2nd element is the I2C XXX signal
             b = p[2].split("_")[0]
             s1 += (
@@ -449,7 +449,7 @@ def print_i2c(lst):
                 s2 = s1 + af + ")},\n"
                 out_c_file.write(s2)
     out_c_file.write(
-        """    {NC,    NP,    0}
+        """  {NC,    NP,    0}
 };
 #endif
 """
@@ -460,7 +460,7 @@ def print_pwm():
     for p in pwm_list:
         result = get_gpio_af_num(p[1], p[2])
         if result != "NOTFOUND":
-            s1 = "%-12s" % ("    {" + p[0] + ",")
+            s1 = "%-10s" % ("  {" + p[0] + ",")
             # 2nd element is the PWM signal
             a = p[2].split("_")
             inst = a[0]
@@ -479,7 +479,7 @@ def print_pwm():
                 s2 = s1 + af + ", " + chan + neg + ")},  // " + p[2] + "\n"
                 out_c_file.write(s2)
     out_c_file.write(
-        """    {NC,    NP,    0}
+        """  {NC,    NP,    0}
 };
 #endif
 """
@@ -490,7 +490,7 @@ def print_uart(lst):
     for p in lst:
         result = get_gpio_af_num(p[1], p[2])
         if result != "NOTFOUND":
-            s1 = "%-12s" % ("    {" + p[0] + ",")
+            s1 = "%-10s" % ("  {" + p[0] + ",")
             # 2nd element is the UART_XX signal
             b = p[2].split("_")[0]
             s1 += "%-9s" % (b[: len(b) - 1] + b[len(b) - 1 :] + ",")
@@ -503,7 +503,7 @@ def print_uart(lst):
                 s2 = s1 + af + ")},\n"
                 out_c_file.write(s2)
     out_c_file.write(
-        """    {NC,    NP,    0}
+        """  {NC,    NP,    0}
 };
 #endif
 """
@@ -514,7 +514,7 @@ def print_spi(lst):
     for p in lst:
         result = get_gpio_af_num(p[1], p[2])
         if result != "NOTFOUND":
-            s1 = "%-12s" % ("    {" + p[0] + ",")
+            s1 = "%-10s" % ("  {" + p[0] + ",")
             # 2nd element is the SPI_XXXX signal
             instance = p[2].split("_")[0].replace("SPI", "")
             s1 += "SPI" + instance + ", STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, "
@@ -523,7 +523,7 @@ def print_spi(lst):
                 s2 = s1 + af + ")},\n"
                 out_c_file.write(s2)
     out_c_file.write(
-        """    {NC,    NP,    0}
+        """  {NC,    NP,    0}
 };
 #endif
 """
@@ -534,7 +534,7 @@ def print_can(lst):
     for p in lst:
         result = get_gpio_af_num(p[1], p[2])
         if result != "NOTFOUND":
-            s1 = "%-12s" % ("    {" + p[0] + ",")
+            s1 = "%-10s" % ("  {" + p[0] + ",")
             # 2nd element is the CAN_XX signal
             instance = p[2].split("_")[0].replace("CAN", "")
             if len(instance) == 0:
@@ -548,7 +548,7 @@ def print_can(lst):
                 s2 = s1 + af + ")},\n"
                 out_c_file.write(s2)
     out_c_file.write(
-        """    {NC,    NP,    0}
+        """  {NC,    NP,    0}
 };
 #endif
 """
@@ -560,7 +560,7 @@ def print_eth():
     for p in eth_list:
         result = get_gpio_af_num(p[1], p[2])
         if result != "NOTFOUND":
-            s1 = "%-12s" % ("    {" + p[0] + ",")
+            s1 = "%-10s" % ("  {" + p[0] + ",")
             # 2nd element is the ETH_XXXX signal
             s1 += "ETH, STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, " + result + ")},"
             # check duplicated lines, only signal differs
@@ -573,7 +573,7 @@ def print_eth():
                 s1 += "  // " + p[2]
             out_c_file.write(s1)
     out_c_file.write(
-        """\n    {NC,    NP,    0}
+        """\n  {NC,    NP,    0}
 };
 #endif
 """
@@ -585,7 +585,7 @@ def print_qspi():
     for p in qspi_list:
         result = get_gpio_af_num(p[1], p[2])
         if result != "NOTFOUND":
-            s1 = "%-12s" % ("    {" + p[0] + ",")
+            s1 = "%-10s" % ("  {" + p[0] + ",")
             # 2nd element is the QUADSPI_XXXX signal
             s1 += "QUADSPI, STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, " + result + ")},"
             # check duplicated lines, only signal differs
@@ -598,7 +598,7 @@ def print_qspi():
                 s1 += "  // " + p[2]
             out_c_file.write(s1)
     out_c_file.write(
-        """\n    {NC,    NP,    0}
+        """\n  {NC,    NP,    0}
 };
 #endif
 """
@@ -606,7 +606,7 @@ def print_qspi():
 
 
 def print_syswkup():
-    out_h_file.write("    /* SYS_WKUP */\n")
+    out_h_file.write("  /* SYS_WKUP */\n")
     # H7xx and F446 start from 0, inc by 1
     num = syswkup_list[0][2].replace("SYS_WKUP", "")
     inc = 0
@@ -629,10 +629,10 @@ def print_syswkup():
         num = p[2].replace("SYS_WKUP", "")
         if len(num) == 0:
             s1 = "#ifdef PWR_WAKEUP_PIN1\n"
-            s1 += "    SYS_WKUP1"  # single SYS_WKUP for this product
+            s1 += "  SYS_WKUP1"  # single SYS_WKUP for this product
         else:
             s1 = "#ifdef PWR_WAKEUP_PIN%i\n" % (int(num) + inc)
-            s1 += "    SYS_WKUP" + str(int(num) + inc)
+            s1 += "  SYS_WKUP" + str(int(num) + inc)
         s1 += " = " + p[0] + ","
         if (inc == 1) and (p[0] != "NC"):
             s1 += " /* " + p[2] + " */"
