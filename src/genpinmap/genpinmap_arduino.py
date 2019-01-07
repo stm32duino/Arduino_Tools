@@ -50,13 +50,13 @@ def get_gpio_af_num(pintofind, iptofind):
         return get_gpio_af_numF1(pintofind, iptofind)
     # DBG print ('pin to find ' + pintofind)
     i = 0
-    mygpioaf = "NOTFOUND"
+    mygpioaf = ""
     for n in xml_gpio.documentElement.childNodes:
         i += 1
         j = 0
         if n.nodeType == Node.ELEMENT_NODE:
             for firstlevel in n.attributes.items():
-                #                if 'PB7' in firstlevel:
+                # if 'PB7' in firstlevel:
                 if pintofind == firstlevel[1]:
                     # DBG print (i , firstlevel)
                     # n = pin node found
@@ -79,27 +79,20 @@ def get_gpio_af_num(pintofind, iptofind):
                                                 if myc.nodeType == Node.ELEMENT_NODE:
                                                     # myc = node of ALTERNATE
                                                     for mygpioaflist in myc.childNodes:
-                                                        mygpioaf += (
-                                                            " " + mygpioaflist.data
-                                                        )
+                                                        if mygpioaflist.data not in mygpioaf:
+                                                            if mygpioaf != "":
+                                                                mygpioaf += " "
+                                                            mygpioaf += mygpioaflist.data
                                                         # print (mygpioaf)
-    if mygpioaf == "NOTFOUND":
-        print(
-            "GPIO AF not found in "
-            + gpiofile
-            + " for "
-            + pintofind
-            + " and the IP "
-            + iptofind
-        )
-        # quit()
-    return mygpioaf.replace("NOTFOUND ", "")
+    if mygpioaf == "":
+        mygpioaf = "GPIO_AF_NONE"
+    return mygpioaf
 
 
 def get_gpio_af_numF1(pintofind, iptofind):
     # print ('pin to find ' + pintofind + ' ip to find ' + iptofind)
     i = 0
-    mygpioaf = "NOTFOUND"
+    mygpioaf = ""
     for n in xml_gpio.documentElement.childNodes:
         i += 1
         j = 0
@@ -127,7 +120,9 @@ def get_gpio_af_numF1(pintofind, iptofind):
                                             p.nodeType == Node.ELEMENT_NODE
                                             and p.hasChildNodes() is False
                                         ):
-                                            mygpioaf += " AFIO_NONE"
+                                            if mygpioaf != "":
+                                                mygpioaf += " "
+                                            mygpioaf += "AFIO_NONE"
                                         else:
                                             for s in p.childNodes:
                                                 if s.nodeType == Node.ELEMENT_NODE:
@@ -143,24 +138,17 @@ def get_gpio_af_numF1(pintofind, iptofind):
                                                             for (
                                                                 mygpioaflist
                                                             ) in myc.childNodes:
-                                                                mygpioaf += " " + mygpioaflist.data.replace(
+                                                                if mygpioaf != "":
+                                                                    mygpioaf += " "
+                                                                mygpioaf += mygpioaflist.data.replace(
                                                                     "__HAL_", ""
                                                                 ).replace(
                                                                     "_REMAP", ""
                                                                 )
                                                                 # print mygpioaf
-    if mygpioaf == "NOTFOUND":
-        print(
-            "GPIO AF not found in "
-            + gpiofile
-            + " for "
-            + pintofind
-            + " and the IP "
-            + iptofind
-            + " set as AFIO_NONE"
-        )
+    if mygpioaf == "":
         mygpioaf = "AFIO_NONE"
-    return mygpioaf.replace("NOTFOUND ", "")
+    return mygpioaf
 
 
 def store_pin(pin, name):
@@ -462,19 +450,18 @@ def print_dac():
 def print_i2c(lst):
     for p in lst:
         result = get_gpio_af_num(p[1], p[2])
-        if result != "NOTFOUND":
-            s1 = "%-10s" % ("  {" + p[0] + ",")
-            # 2nd element is the I2C XXX signal
-            b = p[2].split("_")[0]
-            s1 += (
-                b[: len(b) - 1]
-                + b[len(b) - 1]
-                + ", STM_PIN_DATA(STM_MODE_AF_OD, GPIO_NOPULL, "
-            )
-            r = result.split(" ")
-            for af in r:
-                s2 = s1 + af + ")},\n"
-                out_c_file.write(s2)
+        s1 = "%-10s" % ("  {" + p[0] + ",")
+        # 2nd element is the I2C XXX signal
+        b = p[2].split("_")[0]
+        s1 += (
+            b[: len(b) - 1]
+            + b[len(b) - 1]
+            + ", STM_PIN_DATA(STM_MODE_AF_OD, GPIO_NOPULL, "
+        )
+        r = result.split(" ")
+        for af in r:
+            s2 = s1 + af + ")},\n"
+            out_c_file.write(s2)
     out_c_file.write(
         """  {NC,    NP,    0}
 };
@@ -486,25 +473,24 @@ def print_i2c(lst):
 def print_pwm():
     for p in pwm_list:
         result = get_gpio_af_num(p[1], p[2])
-        if result != "NOTFOUND":
-            s1 = "%-10s" % ("  {" + p[0] + ",")
-            # 2nd element is the PWM signal
-            a = p[2].split("_")
-            inst = a[0]
-            if len(inst) == 3:
-                inst += "1"
-            s1 += "%-8s" % (inst + ",")
-            chan = a[1].replace("CH", "")
-            if chan.endswith("N"):
-                neg = ", 1"
-                chan = chan.strip("N")
-            else:
-                neg = ", 0"
-            s1 += "STM_PIN_DATA_EXT(STM_MODE_AF_PP, GPIO_PULLUP, "
-            r = result.split(" ")
-            for af in r:
-                s2 = s1 + af + ", " + chan + neg + ")}, // " + p[2] + "\n"
-                out_c_file.write(s2)
+        s1 = "%-10s" % ("  {" + p[0] + ",")
+        # 2nd element is the PWM signal
+        a = p[2].split("_")
+        inst = a[0]
+        if len(inst) == 3:
+            inst += "1"
+        s1 += "%-8s" % (inst + ",")
+        chan = a[1].replace("CH", "")
+        if chan.endswith("N"):
+            neg = ", 1"
+            chan = chan.strip("N")
+        else:
+            neg = ", 0"
+        s1 += "STM_PIN_DATA_EXT(STM_MODE_AF_PP, GPIO_PULLUP, "
+        r = result.split(" ")
+        for af in r:
+            s2 = s1 + af + ", " + chan + neg + ")}, // " + p[2] + "\n"
+            out_c_file.write(s2)
     out_c_file.write(
         """  {NC,    NP,    0}
 };
@@ -516,19 +502,18 @@ def print_pwm():
 def print_uart(lst):
     for p in lst:
         result = get_gpio_af_num(p[1], p[2])
-        if result != "NOTFOUND":
-            s1 = "%-10s" % ("  {" + p[0] + ",")
-            # 2nd element is the UART_XX signal
-            b = p[2].split("_")[0]
-            s1 += "%-9s" % (b[: len(b) - 1] + b[len(b) - 1 :] + ",")
-            if "STM32F10" in mcu_file and lst == uartrx_list:
-                s1 += "STM_PIN_DATA(STM_MODE_INPUT, GPIO_PULLUP, "
-            else:
-                s1 += "STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, "
-            r = result.split(" ")
-            for af in r:
-                s2 = s1 + af + ")},\n"
-                out_c_file.write(s2)
+        s1 = "%-10s" % ("  {" + p[0] + ",")
+        # 2nd element is the UART_XX signal
+        b = p[2].split("_")[0]
+        s1 += "%-9s" % (b[: len(b) - 1] + b[len(b) - 1 :] + ",")
+        if "STM32F10" in mcu_file and lst == uartrx_list:
+            s1 += "STM_PIN_DATA(STM_MODE_INPUT, GPIO_PULLUP, "
+        else:
+            s1 += "STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, "
+        r = result.split(" ")
+        for af in r:
+            s2 = s1 + af + ")},\n"
+            out_c_file.write(s2)
     out_c_file.write(
         """  {NC,    NP,    0}
 };
@@ -540,15 +525,14 @@ def print_uart(lst):
 def print_spi(lst):
     for p in lst:
         result = get_gpio_af_num(p[1], p[2])
-        if result != "NOTFOUND":
-            s1 = "%-10s" % ("  {" + p[0] + ",")
-            # 2nd element is the SPI_XXXX signal
-            instance = p[2].split("_")[0].replace("SPI", "")
-            s1 += "SPI" + instance + ", STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, "
-            r = result.split(" ")
-            for af in r:
-                s2 = s1 + af + ")},\n"
-                out_c_file.write(s2)
+        s1 = "%-10s" % ("  {" + p[0] + ",")
+        # 2nd element is the SPI_XXXX signal
+        instance = p[2].split("_")[0].replace("SPI", "")
+        s1 += "SPI" + instance + ", STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, "
+        r = result.split(" ")
+        for af in r:
+            s2 = s1 + af + ")},\n"
+            out_c_file.write(s2)
     out_c_file.write(
         """  {NC,    NP,    0}
 };
@@ -560,20 +544,19 @@ def print_spi(lst):
 def print_can(lst):
     for p in lst:
         result = get_gpio_af_num(p[1], p[2])
-        if result != "NOTFOUND":
-            s1 = "%-10s" % ("  {" + p[0] + ",")
-            # 2nd element is the CAN_XX signal
-            instance = p[2].split("_")[0].replace("CAN", "")
-            if len(instance) == 0:
-                instance = "1"
-            if "STM32F10" in mcu_file and lst == canrd_list:
-                s1 += "CAN" + instance + ", STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, "
-            else:
-                s1 += "CAN" + instance + ", STM_PIN_DATA(STM_MODE_AF_PP, GPIO_NOPULL, "
-            r = result.split(" ")
-            for af in r:
-                s2 = s1 + af + ")},\n"
-                out_c_file.write(s2)
+        s1 = "%-10s" % ("  {" + p[0] + ",")
+        # 2nd element is the CAN_XX signal
+        instance = p[2].split("_")[0].replace("CAN", "")
+        if len(instance) == 0:
+            instance = "1"
+        if "STM32F10" in mcu_file and lst == canrd_list:
+            s1 += "CAN" + instance + ", STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, "
+        else:
+            s1 += "CAN" + instance + ", STM_PIN_DATA(STM_MODE_AF_PP, GPIO_NOPULL, "
+        r = result.split(" ")
+        for af in r:
+            s2 = s1 + af + ")},\n"
+            out_c_file.write(s2)
     out_c_file.write(
         """  {NC,    NP,    0}
 };
@@ -586,19 +569,18 @@ def print_eth():
     prev_s = ""
     for p in eth_list:
         result = get_gpio_af_num(p[1], p[2])
-        if result != "NOTFOUND":
-            s1 = "%-10s" % ("  {" + p[0] + ",")
-            # 2nd element is the ETH_XXXX signal
-            s1 += "ETH, STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, " + result + ")},"
-            # check duplicated lines, only signal differs
-            if prev_s == s1:
-                s1 = "|" + p[2]
-            else:
-                if len(prev_s) > 0:
-                    out_c_file.write("\n")
-                prev_s = s1
-                s1 += " // " + p[2]
-            out_c_file.write(s1)
+        s1 = "%-10s" % ("  {" + p[0] + ",")
+        # 2nd element is the ETH_XXXX signal
+        s1 += "ETH, STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, " + result + ")},"
+        # check duplicated lines, only signal differs
+        if prev_s == s1:
+            s1 = "|" + p[2]
+        else:
+            if len(prev_s) > 0:
+                out_c_file.write("\n")
+            prev_s = s1
+            s1 += " // " + p[2]
+        out_c_file.write(s1)
     out_c_file.write(
         """\n  {NC,    NP,    0}
 };
@@ -611,19 +593,18 @@ def print_qspi():
     prev_s = ""
     for p in qspi_list:
         result = get_gpio_af_num(p[1], p[2])
-        if result != "NOTFOUND":
-            s1 = "%-10s" % ("  {" + p[0] + ",")
-            # 2nd element is the QUADSPI_XXXX signal
-            s1 += "QUADSPI, STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, " + result + ")},"
-            # check duplicated lines, only signal differs
-            if prev_s == s1:
-                s1 = "|" + p[2]
-            else:
-                if len(prev_s) > 0:
-                    out_c_file.write("\n")
-                prev_s = s1
-                s1 += " // " + p[2]
-            out_c_file.write(s1)
+        s1 = "%-10s" % ("  {" + p[0] + ",")
+        # 2nd element is the QUADSPI_XXXX signal
+        s1 += "QUADSPI, STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, " + result + ")},"
+        # check duplicated lines, only signal differs
+        if prev_s == s1:
+            s1 = "|" + p[2]
+        else:
+            if len(prev_s) > 0:
+                out_c_file.write("\n")
+            prev_s = s1
+            s1 += " // " + p[2]
+        out_c_file.write(s1)
     out_c_file.write(
         """\n  {NC,    NP,    0}
 };

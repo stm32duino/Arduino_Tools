@@ -1,6 +1,6 @@
 /*
  *******************************************************************************
- * Copyright (c) 2018, STMicroelectronics
+ * Copyright (c) 2019, STMicroelectronics
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -214,8 +214,8 @@ const PinMap PinMap_CAN_TD[] = {
 #ifdef HAL_PCD_MODULE_ENABLED
 const PinMap PinMap_USB[] = {
   {PA_4,  USB, STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, GPIO_AF2_USB)}, // USB_NOE
-  {PA_11, USB, STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, 0)}, // USB_DM
-  {PA_12, USB, STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, 0)}, // USB_DP
+  {PA_11, USB, STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, GPIO_AF_NONE)}, // USB_DM
+  {PA_12, USB, STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, GPIO_AF_NONE)}, // USB_DP
   {PA_13, USB, STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, GPIO_AF2_USB)}, // USB_NOE
   {PA_15, USB, STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, GPIO_AF5_USB)}, // USB_NOE
   {NC,    NP,    0}
