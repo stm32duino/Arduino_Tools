@@ -79,10 +79,15 @@ def get_gpio_af_num(pintofind, iptofind):
                                                 if myc.nodeType == Node.ELEMENT_NODE:
                                                     # myc = node of ALTERNATE
                                                     for mygpioaflist in myc.childNodes:
-                                                        if mygpioaflist.data not in mygpioaf:
+                                                        if (
+                                                            mygpioaflist.data
+                                                            not in mygpioaf
+                                                        ):
                                                             if mygpioaf != "":
                                                                 mygpioaf += " "
-                                                            mygpioaf += mygpioaflist.data
+                                                            mygpioaf += (
+                                                                mygpioaflist.data
+                                                            )
                                                         # print (mygpioaf)
     if mygpioaf == "":
         mygpioaf = "GPIO_AF_NONE"
@@ -650,43 +655,53 @@ def print_syswkup_h():
 
 def print_usb(lst):
     use_hs_in_fs = False
+    nb_loop = 1
     inst = "USB"
     if lst == usb_otgfs_list:
         inst = "USB_OTG_FS"
     elif lst == usb_otghs_list:
         inst = "USB_OTG_HS"
+        nb_loop = 2
 
-    for p in lst:
-        result = get_gpio_af_num(p[1], p[2])
-        s1 = "%-10s" % ("  {" + p[0] + ",")
-        if lst == usb_otghs_list:
-            if "ULPI" not in p[2] and not use_hs_in_fs:
-                out_c_file.write("#ifdef USE_USB_HS_IN_FS\n")
-                use_hs_in_fs = True
-            if "ULPI" in p[2] and use_hs_in_fs:
-                out_c_file.write("#endif /* USE_USB_HS_IN_FS */\n")
-                use_hs_in_fs = False
+    for nb in range(nb_loop):
+        for p in lst:
+            result = get_gpio_af_num(p[1], p[2])
+            s1 = "%-10s" % ("  {" + p[0] + ",")
+            if lst == usb_otghs_list:
+                if nb == 0:
+                    if "ULPI" in p[2]:
+                        continue
+                    elif not use_hs_in_fs:
+                        out_c_file.write("#ifdef USE_USB_HS_IN_FS\n")
+                        use_hs_in_fs = True
+                else:
+                    if "ULPI" not in p[2]:
+                        continue
+                    elif use_hs_in_fs:
+                        out_c_file.write("#else\n")
+                        use_hs_in_fs = False
 
-        # 2nd element is the USB_XXXX signal
-        if not p[2].startswith("USB_D") and "VBUS" not in p[2]:
-            if "ID" not in p[2]:
-                s1 += inst + ", STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, "
+            # 2nd element is the USB_XXXX signal
+            if not p[2].startswith("USB_D") and "VBUS" not in p[2]:
+                if "ID" not in p[2]:
+                    s1 += inst + ", STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, "
+                else:
+                    # ID pin: AF_PP + PULLUP
+                    s1 += inst + ", STM_PIN_DATA(STM_MODE_AF_OD, GPIO_PULLUP, "
             else:
-                # ID pin: AF_PP + PULLUP
-                s1 += inst + ", STM_PIN_DATA(STM_MODE_AF_OD, GPIO_PULLUP, "
-        else:
-            # USB_DM/DP and VBUS: INPUT + NOPULL
-            s1 += inst + ", STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, "
-        if result == "NOTFOUND":
-            s1 += "0)},"
-        else:
-            r = result.split(" ")
-            for af in r:
-                s1 += af + ")},"
-        s1 += " // " + p[2] + "\n"
-        out_c_file.write(s1)
+                # USB_DM/DP and VBUS: INPUT + NOPULL
+                s1 += inst + ", STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, "
+            if result == "NOTFOUND":
+                s1 += "0)},"
+            else:
+                r = result.split(" ")
+                for af in r:
+                    s1 += af + ")},"
+            s1 += " // " + p[2] + "\n"
+            out_c_file.write(s1)
+
     if lst:
-        if use_hs_in_fs:
+        if lst == usb_otghs_list:
             out_c_file.write("#endif /* USE_USB_HS_IN_FS */\n")
         out_c_file.write(
             """  {NC,    NP,    0}
