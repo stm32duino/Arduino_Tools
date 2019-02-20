@@ -917,7 +917,7 @@ if args.mcu:
         quit()
     mcu_list.append(args.mcu)
 else:
-    mcu_list = fnmatch.filter(os.listdir(cubemxdir), "STM32*.xml")
+    mcu_list = fnmatch.filter(os.listdir(cubemxdir), "STM32[!M][!P]*.xml")
 
 if args.list:
     print("Available xml files description: %i" % len(mcu_list))
