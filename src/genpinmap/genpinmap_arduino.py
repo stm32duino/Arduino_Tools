@@ -696,10 +696,10 @@ def print_usb(lst):
 
 def print_usb_h():
     if usb_list or usb_otgfs_list or usb_otghs_list:
-        out_h_file.write("  /* USB */\n")
+        out_h_file.write("/* USB */\n")
         out_h_file.write("#ifdef USBCON\n")
         for p in usb_list + usb_otgfs_list + usb_otghs_list:
-            out_h_file.write("  " + p[2] + " = " + p[0] + ",\n")
+            out_h_file.write(p[2] + " = " + p[0] + ",\n")
         out_h_file.write("#endif\n")
 
 
@@ -942,6 +942,9 @@ for mcu_file in mcu_list:
 
     nb_pin = len(io_list)
     print(" * I/O pins found: %i" % nb_pin)
+    # io_list.sort(key=natural_sortkey)
+    # for io in io_list:
+    #     print(io[1])
     print("done\n")
     clean_all_lists()
 
