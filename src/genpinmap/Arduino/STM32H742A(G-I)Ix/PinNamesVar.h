@@ -9,7 +9,7 @@ SYS_WKUP2 = PA_2, /* SYS_WKUP1 */
 SYS_WKUP3 = PC_13, /* SYS_WKUP2 */
 #endif
 #ifdef PWR_WAKEUP_PIN4
-SYS_WKUP4 = PI_8, /* SYS_WKUP3 */
+SYS_WKUP4 = NC,
 #endif
 #ifdef PWR_WAKEUP_PIN5
 SYS_WKUP5 = PI_11, /* SYS_WKUP4 */

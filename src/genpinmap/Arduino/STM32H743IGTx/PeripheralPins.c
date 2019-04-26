@@ -9,7 +9,7 @@
  *                        opensource.org/licenses/BSD-3-Clause
  *
  *******************************************************************************
- * Automatically generated from STM32H750IBKx.xml
+ * Automatically generated from STM32H743IGTx.xml
  */
 #include "Arduino.h"
 #include "PeripheralPins.h"
