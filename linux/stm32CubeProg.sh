@@ -22,12 +22,15 @@ usage()
   echo "##   2: DFU"
   echo "## file_path: file path name to be downloaded: (bin, hex)"
   echo "## Options:"
-  echo "##   For SWD: -rst"
-  echo "##     -rst: Reset system (default)"
-  echo "##   For Serial: <com_port> -s"
-  echo "##     com_port: serial identifier. Ex: /dev/ttyS0"
-  echo "##     -s: start automatically"
-  echo "##   For DFU: none"
+  echo "##   For SWD and DFU: no mandatory options"
+  echo "##   For Serial: <com_port>"
+  echo "##     com_port: serial identifier (mandatory). Ex: /dev/ttyS0"
+  echo "##"
+  echo "## Note: all trailing arguments will be passed to the $STM32CP_CLI"
+  echo "##   They have to be valid commands for STM32 MCU"
+  echo "##   Ex: -g: Run the code at the specified address"
+  echo "##       -rst: Reset system"
+  echo "##       -s: start automatically (optional)"
   echo "############################################################"
   exit $1
 }
@@ -66,27 +69,25 @@ case $1 in
   0)
     PORT='SWD'
     MODE='mode=UR'
-    if [ $# -lt 3 ]; then
-      OPTS=-rst
-    else
-      OPTS=$3
-    fi;;
+    shift 2;;
   1)
     if [ $# -lt 3 ]; then
       usage 3
     else
       PORT=$3
-      if [ $# -gt 3 ]; then
-        shift 3
-        OPTS="$@"
-      fi
+      shift 3
     fi;;
   2)
-    PORT='USB1';;
+    PORT='USB1'
+    shift 2;;
   *)
     echo "Protocol unknown!"
     usage 4;;
 esac
+
+if [ $# -gt 0 ]; then
+  OPTS="$@"
+fi
 
 ${STM32CP_CLI} -c port=${PORT} ${MODE} -q -d ${FILEPATH} ${ADDRESS} ${OPTS}
 

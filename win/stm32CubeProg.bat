@@ -39,22 +39,23 @@ goto :usage
 :SWD
 set PORT=SWD
 set MODE=mode=UR
-if "%~3"=="" (set OPTS=-rst) else (set OPTS=%3)
-goto :prog
+goto :opt
 
 :SERIAL
 if "%~3"=="" set ERROR=3 & goto :usage
 set PORT=%~3
-
-if "%~4"=="" goto :prog
 shift
-shift
-shift
-set OPTS=%*
-goto :prog
+goto :opt
 
 :DFU
 set PORT=USB1
+goto :opt
+
+:opt
+shift
+shift
+if "%~1"=="" goto :prog
+set OPTS=%*
 goto :prog
 
 :prog
@@ -70,10 +71,13 @@ exit 0
   echo   2: DFU
   echo file_path: file path name to be downloaded: (bin, hex)
   echo Options:
-  echo   For SWD: -rst
-  echo     -rst: Reset system (default)
-  echo   For Serial: ^<com_port^> -s
-  echo     com_port: serial identifier. Ex: /dev/ttyS0
-  echo     -s: start automatically
-  echo   For DFU: none
+  echo   For SWD and DFU: no mandatory options
+  echo   For Serial: ^<com_port^>
+  echo     com_port: serial identifier (mandatory). Ex: COM15
+  echo.
+  echo Note: all trailing arguments will be passed to the  %STM32CP_CLI%
+  echo   They have to be valid commands for STM32 MCU
+  echo   Ex: -g: Run the code at the specified address
+  echo       -rst: Reset system
+  echo       -s: start automatically (optional)
   exit %ERROR%
