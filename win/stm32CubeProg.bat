@@ -55,7 +55,7 @@ goto :opt
 shift
 shift
 if "%~1"=="" goto :prog
-set OPTS=%*
+set OPTS=%1 %2 %3 %4 %5 %6 %7 %8 %9
 goto :prog
 
 :prog
