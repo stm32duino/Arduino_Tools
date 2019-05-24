@@ -3,6 +3,10 @@
 set ERROR=0
 set STM32CP_CLI=STM32_Programmer_CLI.exe
 set ADDRESS=0x8000000
+set ERASE=
+set MODE=
+set PORT=
+set OPTS=
 
 :: Check tool
 where /Q %STM32CP_CLI%
@@ -23,15 +27,23 @@ exit 1
 :: Parse options
 if "%~1"=="" echo Not enough arguments! & set ERROR=2 & goto :usage
 if "%~2"=="" echo Not enough arguments! & set ERROR=2 & goto :usage
+
+set PROTOCOL=%~1
 set FILEPATH=%~2
 
 :: Protocol
+:: 1x: Erase all sectors
+if %~1 lss 10 goto :proto
+set ERASE=-e all
+set /a PROTOCOL-=10
+
 :: 0: SWD
 :: 1: Serial
 :: 2: DFU
-if %~1==0 goto :SWD
-if %~1==1 goto :SERIAL
-if %~1==2 goto :DFU
+:proto
+if %PROTOCOL%==0 goto :SWD
+if %PROTOCOL%==1 goto :SERIAL
+if %PROTOCOL%==2 goto :DFU
 echo Protocol unknown!
 set ERROR=4
 goto :usage
@@ -59,7 +71,7 @@ set OPTS=%1 %2 %3 %4 %5 %6 %7 %8 %9
 goto :prog
 
 :prog
-%STM32CP_CLI% -c port=%PORT% %MODE% -q -d %FILEPATH% %ADDRESS% %OPTS%
+%STM32CP_CLI% -c port=%PORT% %MODE% %ERASE% -q -d %FILEPATH% %ADDRESS% %OPTS%
 exit 0
 
 :usage
@@ -69,6 +81,8 @@ exit 0
   echo   0: SWD
   echo   1: Serial
   echo   2: DFU
+  echo    Note: prefix it by 1 to erase all sectors
+  echo          Ex: 10 erase all sectors using SWD interface
   echo file_path: file path name to be downloaded: (bin, hex)
   echo Options:
   echo   For SWD and DFU: no mandatory options

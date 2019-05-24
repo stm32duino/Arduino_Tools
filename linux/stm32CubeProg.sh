@@ -3,7 +3,7 @@ set -o nounset                              # Treat unset variables as an error
 #set -x
 STM32CP_CLI=STM32_Programmer.sh
 ADDRESS=0x8000000
-FILEPATH=
+ERASE=
 MODE=
 PORT=
 OPTS=
@@ -16,10 +16,12 @@ usage()
   echo "##"
   echo "## `basename $0` <protocol> <file_path> [OPTIONS]"
   echo "##"
-  echo "## protocol: "
+  echo "## protocol:"
   echo "##   0: SWD"
-  echo "##   1: Serial "
+  echo "##   1: Serial"
   echo "##   2: DFU"
+  echo "##   Note: prefix it by 1 to erase all sectors."
+  echo "##         Ex: 10 erase all sectors using SWD interface."
   echo "## file_path: file path name to be downloaded: (bin, hex)"
   echo "## Options:"
   echo "##   For SWD and DFU: no mandatory options"
@@ -58,14 +60,20 @@ if [ $# -lt 2 ]; then
     usage 2
 fi
 
-FILEPATH=$2
-
 # Parse options
+PROTOCOL=$1
+FILEPATH=$2
+# Protocol $1
+# 1x: Erase all sectors
+if [ $1 -ge 10 ]; then
+  ERASE='-e all'
+  PROTOCOL=$(($1 - 10))
+fi
 # Protocol $1
 # 0: SWD
 # 1: Serial
 # 2: DFU
-case $1 in
+case $PROTOCOL in
   0)
     PORT='SWD'
     MODE='mode=UR'
@@ -89,7 +97,7 @@ if [ $# -gt 0 ]; then
   OPTS="$@"
 fi
 
-${STM32CP_CLI} -c port=${PORT} ${MODE} -q -d ${FILEPATH} ${ADDRESS} ${OPTS}
+${STM32CP_CLI} -c port=${PORT} ${MODE} ${ERASE} -q -d ${FILEPATH} ${ADDRESS} ${OPTS}
 
 exit 0
 
