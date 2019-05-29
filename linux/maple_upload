@@ -2,8 +2,6 @@
 
 #set -e
 
-
-
 if [ $# -lt 4 ]; then
     echo "Usage: $0 $# <dummy_port> <altID> <usbID> <binfile>" >&2
     exit 1
@@ -29,8 +27,6 @@ DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 "${DIR}/upload-reset" ${dummy_port_fullpath} 750
 
 
-#DFU_UTIL=$(dirname $0)/dfu-util/dfu-util
-DFU_UTIL=/usr/bin/dfu-util
 DFU_UTIL=${DIR}/dfu-util/dfu-util
 if [ ! -x "${DFU_UTIL}" ]; then
     echo "$0: error: cannot find ${DFU_UTIL}" >&2
