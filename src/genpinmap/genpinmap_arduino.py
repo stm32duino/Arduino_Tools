@@ -274,6 +274,7 @@ def store_qspi(pin, name, signal):
 # function to store SYS pins
 def store_sys(pin, name, signal):
     if "_WKUP" in signal:
+        signal = signal.replace("PWR", "SYS")
         if isPinAndSignalInList(pin, signal, syswkup_list):
             return
         syswkup_list.append([pin, name, signal])
@@ -850,7 +851,7 @@ def parse_pins():
                     store_eth(pin, name, sig)
                 if "QUADSPI" in sig:
                     store_qspi(pin, name, sig)
-                if "SYS_" in sig:
+                if "SYS_" or "PWR_" in sig:
                     store_sys(pin, name, sig)
                 if "USB" in sig:
                     store_usb(pin, name, sig)
