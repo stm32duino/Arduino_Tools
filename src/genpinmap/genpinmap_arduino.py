@@ -405,7 +405,7 @@ def print_list_header(feature, lname, switch, *argslst):
                 (
                     """
 #ifdef HAL_%s_MODULE_ENABLED
-const PinMap PinMap_%s[] = {
+WEAK const PinMap PinMap_%s[] = {
 """
                 )
                 % (switch, lname)
