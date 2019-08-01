@@ -294,3 +294,5 @@ WEAK const PinMap PinMap_USB[] = {
 //*** No USB_OTG_FS ***
 
 //*** No USB_OTG_HS ***
+
+//*** No SD ***

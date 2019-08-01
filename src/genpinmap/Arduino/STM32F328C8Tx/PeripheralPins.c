@@ -234,3 +234,5 @@ WEAK const PinMap PinMap_CAN_TD[] = {
 //*** No QUADSPI ***
 
 //*** No USB ***
+
+//*** No SD ***

@@ -214,3 +214,5 @@ WEAK const PinMap PinMap_QUADSPI[] = {
 #endif
 
 //*** No USB ***
+
+//*** No SD ***

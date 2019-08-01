@@ -230,3 +230,5 @@ WEAK const PinMap PinMap_SPI_SSEL[] = {
 //*** No QUADSPI ***
 
 //*** No USB ***
+
+//*** No SD ***
