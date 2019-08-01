@@ -33,6 +33,7 @@ syswkup_list = []  # 'PIN','name','SYSWKUP'
 usb_list = []  # 'PIN','name','USB'
 usb_otgfs_list = []  # 'PIN','name','USB'
 usb_otghs_list = []  # 'PIN','name','USB'
+sd_list = []  # 'PIN','name','SD'
 
 
 def find_gpio_file():
@@ -296,6 +297,14 @@ def store_usb(pin, name, signal):
         usb_otghs_list.append([pin, name, signal])
 
 
+# function to store SD pins
+def store_sd(pin, name, signal):
+    # print(pin, signal, name)
+    if isPinAndSignalInList(pin, signal, sd_list):
+        return
+    sd_list.append([pin, name, signal])
+
+
 def print_header():
     s = """/*
  *******************************************************************************
@@ -377,6 +386,8 @@ def print_all_lists():
             print_usb(usb_otgfs_list)
         if print_list_header("", "USB_OTG_HS", "PCD", usb_otghs_list):
             print_usb(usb_otghs_list)
+    if print_list_header("SD", "SD", "SD", sd_list):
+        print_sd()
     # Print specific PinNames in header file
     print_syswkup_h()
     print_usb_h()
@@ -687,6 +698,26 @@ def print_syswkup_h():
         out_h_file.write(s1)
 
 
+def print_sd():
+    for p in sd_list:
+        result = get_gpio_af_num(p[1], p[2])
+        s1 = "%-10s" % ("  {" + p[0] + ",")
+        # 2nd element is the SD signal
+        a = p[2].split("_")
+        if a[1].startswith("C") or a[1].endswith("DIR"):
+            s1 += a[0] + ", STM_PIN_DATA(STM_MODE_AF_PP, GPIO_NOPULL, " + result + ")},"
+        else:
+            s1 += a[0] + ", STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, " + result + ")},"
+        s1 += " // " + p[2] + "\n"
+        out_c_file.write(s1)
+    out_c_file.write(
+        """  {NC,    NP,    0}
+};
+#endif
+"""
+    )
+
+
 def print_usb(lst):
     use_hs_in_fs = False
     nb_loop = 1
@@ -788,6 +819,7 @@ def sort_my_lists():
     usb_list.sort(key=natural_sortkey)
     usb_otgfs_list.sort(key=natural_sortkey)
     usb_otghs_list.sort(key=natural_sortkey)
+    sd_list.sort(key=natural_sortkey)
 
 
 def clean_all_lists():
@@ -813,6 +845,7 @@ def clean_all_lists():
     del usb_list[:]
     del usb_otgfs_list[:]
     del usb_otghs_list[:]
+    del sd_list[:]
 
 
 def parse_pins():
@@ -855,6 +888,8 @@ def parse_pins():
                     store_sys(pin, name, sig)
                 if "USB" in sig:
                     store_usb(pin, name, sig)
+                if sig.startswith("SD"):
+                    store_sd(pin, name, sig)
 
 
 # main
