@@ -26,8 +26,12 @@ DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 "${DIR}/upload-reset" ${dummy_port_fullpath} 750
 
+if [ `uname -m` ==  "x86_64" ]; then
+  DFU_UTIL=${DIR}/dfu-util_x86_64/dfu-util
+else
+  DFU_UTIL=${DIR}/dfu-util/dfu-util
+fi
 
-DFU_UTIL=${DIR}/dfu-util/dfu-util
 if [ ! -x "${DFU_UTIL}" ]; then
     echo "$0: error: cannot find ${DFU_UTIL}" >&2
     exit 2
