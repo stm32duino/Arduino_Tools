@@ -32,6 +32,7 @@ usage()
   echo "## Options:"
   echo "##   For SWD: no mandatory options"
   echo "##   For DFU: no mandatory options"
+  echo "##     Use '-serport=<com_port>' to request reset to bootloader mode"
   echo "##   For Serial: 'serport=<com_port>'"
   echo "##     com_port: serial identifier (mandatory). Ex: /dev/ttyS0"
   echo "##"
@@ -57,6 +58,26 @@ check_tool() {
     echo "https://www.st.com/en/development-tools/stm32cubeprog.html"
     echo "Aborting!"
     exit 1
+  fi
+}
+
+bootloaderMode() {
+  if [ ! -z $SERPORT ]; then
+    # Try to configure it at 1200 to restart
+    # in Bootloader mode
+    if [ -c $SERPORT ]; then
+      count=0
+      res=1
+      while [ $res -ne 0 ] && ((count++ < 5)); do
+        # echo "Try to set $SERPORT at 1200"
+        stty -F $SERPORT 1200 > /dev/null 2>&1
+        res=$?
+        sleep 0.1
+      done
+      if [ $res -eq 0 ]; then
+        sleep 0.5
+      fi
+    fi
   fi
 }
 
@@ -112,7 +133,8 @@ case $PROTOCOL in
     fi
     PORT=$SERPORT;;
   2)
-    PORT='USB1';;
+    PORT='USB1'
+    bootloaderMode;;
   *)
     echo "Protocol unknown!"
     usage 4;;
