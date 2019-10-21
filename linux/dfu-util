@@ -10,7 +10,7 @@ DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 if [ `uname -m` ==  "x86_64" ]; then
   DFU_UTIL=${DIR}/dfu-util_x86_64/dfu-util
 else
-  DFU_UTIL=${DIR}/dfu-util_i686/dfu-util
+  DFU_UTIL=${DIR}/dfu-util_i386/dfu-util
 fi
 
 # Not found!
