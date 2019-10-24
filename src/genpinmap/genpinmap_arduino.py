@@ -850,16 +850,19 @@ def clean_all_lists():
 
 def parse_pins():
     print(" * Getting pins per Ips...")
-    pinregex = r"^(P[A-Z][0-9][0-5]?)"
+    pinregex = r"^(P[A-Z][0-9][0-5]?)|^(ANA[0-9])"
     itemlist = xml_mcu.getElementsByTagName("Pin")
     for s in itemlist:
         m = re.match(pinregex, s.attributes["Name"].value)
         if m:
-            pin = (
-                m.group(0)[:2] + "_" + m.group(0)[2:]
-            )  # pin formatted P<port>_<number>: PF_O
+            if m.group(1) is not None:
+                # pin formatted P<port>_<number>: PF_O
+                pin = m.group(0)[:2] + "_" + m.group(0)[2:]
+            else:
+                # pin formatted ANA_<number>: ANA_1
+                pin = m.group(0)[:3] + "_" + m.group(0)[3:]
             name = s.attributes["Name"].value.strip()  # full name: "PF0 / OSC_IN"
-            if s.attributes["Type"].value == "I/O":
+            if s.attributes["Type"].value in ["I/O", "MonoIO"]:
                 store_pin(pin, name)
             else:
                 continue
@@ -986,7 +989,7 @@ if args.mcu:
         quit()
     mcu_list.append(args.mcu)
 else:
-    mcu_list = fnmatch.filter(os.listdir(cubemxdir), "STM32[!M][!P]*.xml")
+    mcu_list = fnmatch.filter(os.listdir(cubemxdir), "STM32*.xml")
 
 if args.list:
     print("Available xml files description: %i" % len(mcu_list))
