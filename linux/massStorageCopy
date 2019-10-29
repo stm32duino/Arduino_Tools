@@ -41,7 +41,9 @@ bin_filepath=$1
 if [ $2 ==  "-O" ]; then
   shift 1
 fi
-mountpoint_name=$2
+# Strip first and last ""
+mountpoint_name="${2%\"}"
+mountpoint_name="${mountpoint_name#\"}"
 
 if [ -z $bin_filepath ]; then
   echo "No binary file path provided!"
