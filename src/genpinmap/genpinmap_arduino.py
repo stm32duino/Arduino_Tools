@@ -869,7 +869,7 @@ def parse_pins():
             siglist = s.getElementsByTagName("Signal")
             for a in siglist:
                 sig = a.attributes["Name"].value.strip()
-                if "ADC" in sig:
+                if sig.startswith("ADC"):
                     store_adc(pin, name, sig)
                 if all(["DAC" in sig, "_OUT" in sig]):
                     store_dac(pin, name, sig)
@@ -891,7 +891,7 @@ def parse_pins():
                     store_sys(pin, name, sig)
                 if "USB" in sig:
                     store_usb(pin, name, sig)
-                if sig.startswith("SD"):
+                if re.match("^SD(IO|MMC)", sig) is not None:
                     store_sd(pin, name, sig)
 
 
