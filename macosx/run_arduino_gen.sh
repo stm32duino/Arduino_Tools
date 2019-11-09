@@ -3,6 +3,7 @@
 set -e
 
 REMOTEPROC_DIR="/sys/class/remoteproc/remoteproc0"
+RPMSG_DIR="/dev/ttyRPMSG0"
 ELF_NAME="arduino.ino.elf"
 ELF_INSTALL_PATH="/lib/firmware/$ELF_NAME"
 INSTALL_PATH="/usr/local/arduino/run_arduino.sh"
@@ -143,6 +144,27 @@ systemd_uninstall() {
   echo "File deleted: $INSTALL_PATH"
 }
 
+try_send() {
+  # Wait for /dev/ttyRPMSGx for 5 seconds, because the virtual device can be
+  # created later depending on where Serial.begin() is located in the Arduino code.
+  count=0
+  while [ ! -c $RPMSG_DIR ]; do
+    if [ $count -eq 2 ]; then
+      echo "Waiting for virtual serial $RPMSG_DIR is created..."
+    elif [ $count -ge 5 ]; then
+      echo "No virtual serial $RPMSG_DIR is created."
+      echo "If you didn't enable the virtual serial, ignore this message."
+      return 0
+    fi
+    sleep 1;
+    count=$(expr $count + 1)
+  done
+  # Linux host must send any dummy data first to finish initialization of rpmsg
+  # on the coprocessor side. This message should be discarded.
+  # See: https://github.com/OpenAMP/open-amp/issues/182
+  echo "DUMMY" >$RPMSG_DIR
+  echo "Virtual serial $RPMSG_DIR connection established."
+}
 
 case "$1" in
   start)
@@ -150,15 +172,20 @@ case "$1" in
     firmware_load
     firmware_stop
     firmware_start
+    try_send
+    echo "Arduino firmware started."
     ;;
   stop)
     autodetect_board
     firmware_stop
+    echo "Arduino firmware stopped."
     ;;
   restart)
     autodetect_board
     firmware_stop
     firmware_start
+    try_send
+    echo "Arduino firmware restarted."
     ;;
   install)
     autodetect_board
@@ -170,6 +197,23 @@ case "$1" in
     systemd_uninstall
     echo "Auto-start service $(basename $SYSTEMD_SERVICE_PATH) uninstalled."
     ;;
+  monitor)
+    autodetect_board
+    stty igncr onlcr -echo -F $RPMSG_DIR
+    cat $RPMSG_DIR
+    ;;
+  send-msg)
+    autodetect_board
+    echo "${@:2}" >$RPMSG_DIR
+    ;;
+  send-file)
+    autodetect_board
+    dd if="$2" of=$RPMSG_DIR
+    ;;
+  minicom)
+    autodetect_board
+    TERM=xterm minicom -D $RPMSG_DIR
+    ;;
   generate)
     generate_packaged_script $2 $3
     echo "$(readlink -f "$3") generated successfully."
@@ -179,7 +223,10 @@ case "$1" in
     echo "  https://github.com/stm32duino/Arduino_Core_STM32/tree/master/variants/STM32MP157_DK/README.md"
     ;;
   *)
-    echo "Usage: $0 [start|stop|restart|generate|install|uninstall]"
+    echo "Usage: $0 [start|stop|restart]"
+    echo "       $0 [install|uninstall]"
+    echo "       $0 [monitor|send-msg|send-file|minicom]"
+    echo "       $0 [generate]"
     echo ""
     echo "run_arduino.sh is a helper script that helps managing an Arduino binary"
     echo "file for the coprocessor using remoteproc framework."
@@ -198,6 +245,19 @@ case "$1" in
     echo ""
     echo "$0 uninstall"
     echo "    Uninstall the autostart service."
+    echo ""
+    echo "$0 monitor"
+    echo "    Monitor data received from the coprocessor via RPMsg serial (VirtIOSerial)."
+    echo "    This command cannot send any data to the coprocessor."
+    echo ""
+    echo "$0 send-msg <message>"
+    echo "    Send a message to the coprocessor via RPMsg serial (VirtIOSerial)."
+    echo ""
+    echo "$0 send-file <filename>"
+    echo "    Send a file content to the coprocessor via RPMsg serial (VirtIOSerial)."
+    echo ""
+    echo "$0 minicom"
+    echo "    Launch minicom interactive serial communication program."
     echo ""
     echo "$0 stop"
     echo "    Stop the coprocessor."
