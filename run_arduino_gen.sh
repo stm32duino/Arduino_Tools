@@ -250,7 +250,7 @@ case "$1" in
     echo "    Monitor data received from the coprocessor via RPMsg serial (VirtIOSerial)."
     echo "    This command cannot send any data to the coprocessor."
     echo ""
-    echo "$0 send-msg <message>"
+    echo "$0 send-msg <message...>"
     echo "    Send a message to the coprocessor via RPMsg serial (VirtIOSerial)."
     echo ""
     echo "$0 send-file <filename>"
