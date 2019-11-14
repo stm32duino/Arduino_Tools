@@ -7,7 +7,7 @@ RPMSG_DIR="/dev/ttyRPMSG0"
 ELF_NAME="arduino.ino.elf"
 ELF_INSTALL_PATH="/lib/firmware/$ELF_NAME"
 INSTALL_PATH="/usr/local/arduino/run_arduino.sh"
-# systemd path should be same as ${systemd_unitdir}/system/ in the yoctdo distro
+# systemd path should be same as ${systemd_unitdir}/system/ in the yocto distro
 SYSTEMD_SERVICE_PATH="/lib/systemd/system/$(basename $INSTALL_PATH .sh).service"
 # Will be defined in autodetect_board()
 BOARD=""
@@ -27,11 +27,15 @@ autodetect_board() {
 
   #search on device tree compatible entry the board type
   if $(grep -q "stm32mp157c-ev" /proc/device-tree/compatible) ; then
-    BOARD="STM32MP15_M4_EVAL"
+    BOARD="STM32MP157_EVAL"
   elif $(grep -q "stm32mp157c-dk" /proc/device-tree/compatible) ; then
-    BOARD="STM32MP15_M4_DISCO"
+    BOARD="STM32MP157_DK"
+  elif $(grep -q "stm32mp157a-dk" /proc/device-tree/compatible) ; then
+    BOARD="STM32MP157_DK"
+  elif $(grep -q "stm32mp157" /proc/device-tree/compatible) ; then
+    BOARD="STM32MP157_GENERIC"
   else
-    echo "Board is not an EVAL or a DISCO BOARD" > /dev/kmsg
+    echo "Board is not an STM32MP157 BOARD" > /dev/kmsg
     exit 1
   fi
 }
