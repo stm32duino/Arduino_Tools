@@ -219,10 +219,11 @@ case "$1" in
     TERM=xterm minicom -D $RPMSG_DIR
     ;;
   generate)
-    generate_packaged_script $2 $3
-    echo "$(readlink -f "$3") generated successfully."
+    output=$(echo "$3" | sed 's/\.ino\././g')
+    generate_packaged_script $2 $output
+    echo "$(readlink -f "$output") generated successfully."
     echo "This file should be uploaded manually by SCP, SFTP, Kermit, or etc."
-    echo "Then run \"sh ./$(basename $3) start\" command in the board's console."
+    echo "Then run \"sh ./$(basename $output) start\" command in the board's console."
     echo "For detailed instructions, please visit:"
     echo "  https://github.com/stm32duino/Arduino_Core_STM32/tree/master/variants/STM32MP157_DK/README.md"
     ;;
