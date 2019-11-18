@@ -372,9 +372,13 @@ def print_all_lists():
             print_spi(spisclk_list)
         if print_list_header("", "SPI_SSEL", "SPI", spissel_list):
             print_spi(spissel_list)
-    if print_list_header("CAN", "CAN_RD", "CAN", canrd_list, cantd_list):
+    if len(canrd_list) and "FDCAN" in canrd_list[0][2]:
+        canname = "FDCAN"
+    else:
+        canname = "CAN"
+    if print_list_header(canname, "CAN_RD", canname, canrd_list, cantd_list):
         print_can(canrd_list)
-        if print_list_header("", "CAN_TD", "CAN", cantd_list):
+        if print_list_header("", "CAN_TD", canname, cantd_list):
             print_can(cantd_list)
     if print_list_header("ETHERNET", "Ethernet", "ETH", eth_list):
         print_eth()
@@ -595,14 +599,15 @@ def print_can(lst):
     for p in lst:
         result = get_gpio_af_num(p[1], p[2])
         s1 = "%-10s" % ("  {" + p[0] + ",")
-        # 2nd element is the CAN_XX signal
-        instance = p[2].split("_")[0].replace("CAN", "")
-        if len(instance) == 0:
-            instance = "1"
+        # 2nd element is the (FD)CAN_XX signal
+        instance_name = p[2].split("_")[0]
+        instance_number = instance_name.replace("FD", "").replace("CAN", "")
+        if len(instance_number) == 0:
+            instance_name += "1"
         if "STM32F10" in mcu_file and lst == canrd_list:
-            s1 += "CAN" + instance + ", STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, "
+            s1 += instance_name + ", STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, "
         else:
-            s1 += "CAN" + instance + ", STM_PIN_DATA(STM_MODE_AF_PP, GPIO_NOPULL, "
+            s1 += instance_name + ", STM_PIN_DATA(STM_MODE_AF_PP, GPIO_NOPULL, "
         r = result.split(" ")
         for af in r:
             s2 = s1 + af + ")},\n"
