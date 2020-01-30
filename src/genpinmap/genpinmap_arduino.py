@@ -878,7 +878,7 @@ def parse_pins():
                     store_adc(pin, name, sig)
                 if all(["DAC" in sig, "_OUT" in sig]):
                     store_dac(pin, name, sig)
-                if "I2C" in sig:
+                if re.match("^I2C", sig) is not None:  # ignore FMPI2C
                     store_i2c(pin, name, sig)
                 if re.match("^TIM", sig) is not None:  # ignore HRTIM
                     store_pwm(pin, name, sig)
