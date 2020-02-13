@@ -1007,7 +1007,12 @@ for mcu_file in mcu_list:
         "Generating %s and %s for '%s'..." % (out_c_filename, out_h_filename, mcu_file)
     )
     input_file_name = os.path.join(cubemxdir, mcu_file)
-    out_path = os.path.join(cur_dir, "Arduino", os.path.splitext(mcu_file)[0])
+    out_path = os.path.join(
+        cur_dir,
+        "Arduino",
+        os.path.splitext(mcu_file)[0][:7],
+        os.path.splitext(mcu_file)[0],
+    )
     output_c_filename = os.path.join(out_path, out_c_filename)
     output_h_filename = os.path.join(out_path, out_h_filename)
     if not (os.path.isdir(out_path)):
