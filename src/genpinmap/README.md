@@ -19,4 +19,4 @@ optional arguments:
                        in [STM32CubeMX](http://www.st.com/en/development-tools/stm32cubemx.html).
 					 **This xml file contains non alpha characters in its name, you should call it with double quotes**
 
-All generated file are available under _./Arduino/<mcu_name>_ directory
+All generated file are available under _./Arduino/<mcu_serie>/<mcu_name>_ directory
