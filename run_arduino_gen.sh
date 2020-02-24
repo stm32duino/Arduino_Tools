@@ -111,6 +111,7 @@ generate_packaged_script() {
   fi
   echo "'" >> $output_script
   tail -n +$(grep -n "%}" "$this_script" | cut -d: -f1 | head -n 1) $this_script >> $output_script
+  dos2unix $output_script
 }
 
 
