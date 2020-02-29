@@ -213,7 +213,10 @@ case "$1" in
     ;;
   send-file)
     autodetect_board
-    dd if="$2" of=$RPMSG_DIR
+    # Maximum buffer size at a time: 512 - 16 bytes
+    # Otherwise, it used to return error in earlier version of OpenSTLinux
+    # Reference: https://elixir.bootlin.com/linux/v5.5.6/source/drivers/rpmsg/virtio_rpmsg_bus.c#L581
+    dd if="$2" bs=496 of=$RPMSG_DIR
     ;;
   minicom)
     autodetect_board
