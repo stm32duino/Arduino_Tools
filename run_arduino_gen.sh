@@ -167,7 +167,7 @@ try_send() {
   # Linux host must send any dummy data first to finish initialization of rpmsg
   # on the coprocessor side. This message should be discarded.
   # See: https://github.com/OpenAMP/open-amp/issues/182
-  echo "DUMMY" >$RPMSG_DIR
+  echo -n "DUMMY" >$RPMSG_DIR
   echo "Virtual serial $RPMSG_DIR connection established."
 }
 
