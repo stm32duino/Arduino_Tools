@@ -204,7 +204,7 @@ case "$1" in
     ;;
   monitor)
     autodetect_board
-    stty igncr onlcr -echo -F $RPMSG_DIR
+    stty raw -echo -echoe -echok -F $RPMSG_DIR
     cat $RPMSG_DIR
     ;;
   send-msg)
