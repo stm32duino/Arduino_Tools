@@ -218,6 +218,9 @@ case "$1" in
     # Reference: https://elixir.bootlin.com/linux/v5.5.6/source/drivers/rpmsg/virtio_rpmsg_bus.c#L581
     dd if="$2" bs=496 of=$RPMSG_DIR
     ;;
+  log)
+    cat /sys/kernel/debug/remoteproc/remoteproc0/trace0
+    ;;
   minicom)
     autodetect_board
     TERM=xterm minicom -D $RPMSG_DIR
@@ -234,7 +237,8 @@ case "$1" in
   *)
     echo "Usage: $0 [start|stop|restart]"
     echo "       $0 [install|uninstall]"
-    echo "       $0 [monitor|send-msg|send-file|minicom]"
+    echo "       $0 [monitor|minicom|log]"
+    echo "       $0 [send-msg|send-file] ..."
     echo "       $0 [generate]"
     echo ""
     echo "$0 is a helper script that helps managing an Arduino binary"
@@ -268,6 +272,9 @@ case "$1" in
     echo ""
     echo "$0 minicom"
     echo "    Launch minicom interactive serial communication program."
+    echo ""
+    echo "$0 log"
+    echo "    Print debugging log in OpenAMP trace buffer."
     echo ""
     echo "$0 stop"
     echo "    Stop the coprocessor."
