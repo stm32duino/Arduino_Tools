@@ -111,7 +111,7 @@ generate_packaged_script() {
   fi
   echo "'" >> $output_script
   tail -n +$(grep -n "%}" "$this_script" | cut -d: -f1 | head -n 1) $this_script >> $output_script
-  dos2unix $output_script
+  dos2unix $output_script 2> /dev/null
 }
 
 
@@ -167,7 +167,7 @@ try_send() {
   # Linux host must send any dummy data first to finish initialization of rpmsg
   # on the coprocessor side. This message should be discarded.
   # See: https://github.com/OpenAMP/open-amp/issues/182
-  echo "DUMMY" >$RPMSG_DIR
+  echo -n "DUMMY" >$RPMSG_DIR
   echo "Virtual serial $RPMSG_DIR connection established."
 }
 
@@ -204,7 +204,7 @@ case "$1" in
     ;;
   monitor)
     autodetect_board
-    stty igncr onlcr -echo -F $RPMSG_DIR
+    stty raw -echo -echoe -echok -F $RPMSG_DIR
     cat $RPMSG_DIR
     ;;
   send-msg)
@@ -213,7 +213,13 @@ case "$1" in
     ;;
   send-file)
     autodetect_board
-    dd if="$2" of=$RPMSG_DIR
+    # Maximum buffer size at a time: 512 - 16 bytes
+    # Otherwise, it used to return error in earlier version of OpenSTLinux
+    # Reference: https://elixir.bootlin.com/linux/v5.5.6/source/drivers/rpmsg/virtio_rpmsg_bus.c#L581
+    dd if="$2" bs=496 of=$RPMSG_DIR
+    ;;
+  log)
+    cat /sys/kernel/debug/remoteproc/remoteproc0/trace0
     ;;
   minicom)
     autodetect_board
@@ -231,7 +237,8 @@ case "$1" in
   *)
     echo "Usage: $0 [start|stop|restart]"
     echo "       $0 [install|uninstall]"
-    echo "       $0 [monitor|send-msg|send-file|minicom]"
+    echo "       $0 [monitor|minicom|log]"
+    echo "       $0 [send-msg|send-file] ..."
     echo "       $0 [generate]"
     echo ""
     echo "$0 is a helper script that helps managing an Arduino binary"
@@ -265,6 +272,9 @@ case "$1" in
     echo ""
     echo "$0 minicom"
     echo "    Launch minicom interactive serial communication program."
+    echo ""
+    echo "$0 log"
+    echo "    Print debugging log in OpenAMP trace buffer."
     echo ""
     echo "$0 stop"
     echo "    Stop the coprocessor."
