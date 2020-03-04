@@ -6,7 +6,7 @@ if [ $# -lt 4 ]; then
     echo "Usage: $0 $# <dummy_port> <altID> <usbID> <binfile>" >&2
     exit 1
 fi
-dummy_port="$1"; altID="$2"; usbID="$3"; binfile="$4"; dummy_port_fullpath="/dev/$1"
+altID="$2"; usbID="$3"; binfile="$4"; dummy_port_fullpath="/dev/$1"
 if [ $# -eq 5 ]; then
     dfuse_addr="--dfuse-address $5"
 else
@@ -24,14 +24,14 @@ DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 # 750ms to 1500ms seems to work on my Mac
 
 
-"${DIR}/upload-reset" ${dummy_port_fullpath} 750
+"${DIR}/upload-reset" "${dummy_port_fullpath}" 750
 
-"${DIR}/dfu-util.sh" -d ${usbID} -a ${altID} -D ${binfile} ${dfuse_addr} -R
+"${DIR}/dfu-util.sh" -d "${usbID}" -a "${altID}" -D "${binfile}" ${dfuse_addr} -R
 
-echo -n Waiting for ${dummy_port_fullpath} serial...
+echo -n Waiting for "${dummy_port_fullpath}" serial...
 
 COUNTER=0
-while [ ! -r ${dummy_port_fullpath} ] && ((COUNTER++ < 40)); do
+while [ ! -r "${dummy_port_fullpath}" ] && ((COUNTER++ < 40)); do
     sleep 0.1
 done
 
