@@ -1,5 +1,5 @@
 #!/bin/bash
-set -o nounset                              # Treat unset variables as an error
+set -o nounset # Treat unset variables as an error
 
 # List
 bin_filepath=
@@ -8,8 +8,7 @@ mountpoint_path=
 
 ###############################################################################
 ## Help function
-usage()
-{
+usage() {
   echo "############################################################"
   echo "##"
   echo "## $(basename "$0") [-I <filepath>] [-O <mountpoint(s)> ]"
@@ -30,13 +29,13 @@ if [ $# -lt 2 ]; then
 fi
 
 # Parsing options
-if [ "$1" ==  "-I" ]; then
+if [ "$1" == "-I" ]; then
   shift 1
 fi
 
 bin_filepath=$1
 
-if [ "$2" ==  "-O" ]; then
+if [ "$2" == "-O" ]; then
   shift 1
 fi
 # Strip first and last ""

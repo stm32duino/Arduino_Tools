@@ -1,5 +1,5 @@
 #!/bin/bash
-set -o nounset                              # Treat unset variables as an error
+set -o nounset # Treat unset variables as an error
 STM32CP_CLI=STM32_Programmer.sh
 ADDRESS=0x8000000
 ERASE=""
@@ -9,8 +9,7 @@ OPTS=""
 
 ###############################################################################
 ## Help function
-usage()
-{
+usage() {
   echo "############################################################"
   echo "##"
   echo "## $(basename "$0") <protocol> <file_path> [OPTIONS]"
@@ -37,12 +36,10 @@ usage()
 }
 
 check_tool() {
-  if ! command -v $STM32CP_CLI >/dev/null 2>&1
-  then
+  if ! command -v $STM32CP_CLI > /dev/null 2>&1; then
     export PATH="$HOME/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin":$PATH
   fi
-  if ! command -v $STM32CP_CLI >/dev/null 2>&1
-  then
+  if ! command -v $STM32CP_CLI > /dev/null 2>&1; then
     echo "$STM32CP_CLI not found."
     echo "Please install it or add '<STM32CubeProgrammer path>/bin' to your PATH environment:"
     echo "https://www.st.com/en/development-tools/stm32cubeprog.html"
@@ -54,8 +51,8 @@ check_tool() {
 check_tool
 
 if [ $# -lt 2 ]; then
-    echo "Not enough arguments!"
-    usage 2
+  echo "Not enough arguments!"
+  usage 2
 fi
 
 # Parse options
@@ -75,20 +72,24 @@ case $PROTOCOL in
   0)
     PORT="SWD"
     MODE="mode=UR"
-    shift 2;;
+    shift 2
+    ;;
   1)
     if [ $# -lt 3 ]; then
       usage 3
     else
       PORT=$3
       shift 3
-    fi;;
+    fi
+    ;;
   2)
     PORT="USB1"
-    shift 2;;
+    shift 2
+    ;;
   *)
     echo "Protocol unknown!"
-    usage 4;;
+    usage 4
+    ;;
 esac
 
 if [ $# -gt 0 ]; then
@@ -98,4 +99,3 @@ fi
 ${STM32CP_CLI} -c port=${PORT} ${MODE} ${ERASE:+"-e all"} -q -d "${FILEPATH}" ${ADDRESS} "${OPTS}"
 
 exit $?
-

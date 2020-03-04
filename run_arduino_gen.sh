@@ -18,7 +18,6 @@ ELF_HASH=""
 ELF_BINARY=""
 ### END OF BINARY PART %} ###
 
-
 autodetect_board() {
   if [ ! -d /proc/device-tree/ ]; then
     echo "Proc Device tree are not available, Could not detect on which board we are" > /dev/kmsg
@@ -26,13 +25,13 @@ autodetect_board() {
   fi
 
   #search on device tree compatible entry the board type
-  if grep -q "stm32mp157c-ev" /proc/device-tree/compatible ; then
+  if grep -q "stm32mp157c-ev" /proc/device-tree/compatible; then
     BOARD="STM32MP157_EVAL"
-  elif grep -q "stm32mp157c-dk" /proc/device-tree/compatible ; then
+  elif grep -q "stm32mp157c-dk" /proc/device-tree/compatible; then
     BOARD="STM32MP157_DK"
-  elif grep -q "stm32mp157a-dk" /proc/device-tree/compatible ; then
+  elif grep -q "stm32mp157a-dk" /proc/device-tree/compatible; then
     BOARD="STM32MP157_DK"
-  elif grep -q "stm32mp157" /proc/device-tree/compatible ; then
+  elif grep -q "stm32mp157" /proc/device-tree/compatible; then
     BOARD="STM32MP157_GENERIC"
   else
     echo "Board is not an STM32MP157 BOARD" > /dev/kmsg
@@ -41,14 +40,13 @@ autodetect_board() {
   echo "Board is $BOARD" > /dev/kmsg
 }
 
-
 firmware_load() {
   if [ -z "$ELF_BINARY" ]; then
     echo "No Arduino binary contained. Run generate command first."
     exit 1
   fi
 
-  if ( echo "$ELF_HASH $ELF_INSTALL_PATH" | sha256sum --status -c - 2>/dev/null ); then
+  if (echo "$ELF_HASH $ELF_INSTALL_PATH" | sha256sum --status -c - 2> /dev/null); then
     # The same firmware already exists, skip this step
     echo "The same firmware is already installed. Starting..."
     return 0
@@ -56,18 +54,17 @@ firmware_load() {
 
   # Decode base64-encoded binary to a temp directory and check hash
   tmp_elf_file="/tmp/$ELF_NAME"
-  if which uudecode >/dev/null 2>&1; then
+  if which uudecode > /dev/null 2>&1; then
     printf "%s" "$ELF_BINARY" | uudecode -o /dev/stdout | gzip -d > "$tmp_elf_file"
-  else 
-    printf "%s" "$ELF_BINARY" | tail -n +2 | base64 -d - 2>/dev/null | gzip -d > "$tmp_elf_file"
+  else
+    printf "%s" "$ELF_BINARY" | tail -n +2 | base64 -d - 2> /dev/null | gzip -d > "$tmp_elf_file"
   fi
   echo "$ELF_HASH $tmp_elf_file" | sha256sum --status -c -
-  
+
   # Copy elf into /lib/firmware
   mv $tmp_elf_file $ELF_INSTALL_PATH
   echo "Arduino: Executable created: $ELF_INSTALL_PATH" > /dev/kmsg
 }
-
 
 firmware_start() {
   # Change the name of the firmware
@@ -78,16 +75,14 @@ firmware_start() {
 
   # Restart firmware
   echo "Arduino: Starting $ELF_INSTALL_PATH" > /dev/kmsg
-  echo start > $REMOTEPROC_DIR/state 2>/dev/null || true
+  echo start > $REMOTEPROC_DIR/state 2> /dev/null || true
 }
-
 
 firmware_stop() {
   # Stop the firmware
   echo "Arduino: Stopping $ELF_INSTALL_PATH" > /dev/kmsg
-  echo stop > $REMOTEPROC_DIR/state 2>/dev/null || true
+  echo stop > $REMOTEPROC_DIR/state 2> /dev/null || true
 }
-
 
 generate_packaged_script() {
   elf_path="$1"
@@ -97,14 +92,14 @@ generate_packaged_script() {
     echo "The output file name must be diffent from this script file"
     exit 1
   fi
-  
+
   # Generate a copy of this script with a self-contained elf binary and its hash
   # The elf binary is gzip'ed, making its size to 1/6, and then Base64-encoded
   # using uuencode.
   head -n "$(grep -n "{%" "$this_script" | cut -d: -f1 | head -n 1)" "$this_script" > "$output_script"
   echo "ELF_HASH='$(sha256sum "$elf_path" | cut -d' ' -f1)'" >> "$output_script"
   printf "ELF_BINARY='" >> "$output_script"
-  if which uuencode >/dev/null 2>&1; then
+  if which uuencode > /dev/null 2>&1; then
     gzip -c "$elf_path" | uuencode -m $ELF_NAME >> "$output_script"
   else
     echo "begin-base64 644 $ELF_NAME" >> "$output_script"
@@ -114,7 +109,6 @@ generate_packaged_script() {
   tail -n +"$(grep -n "%}" "$this_script" | cut -d: -f1 | head -n 1)" "$this_script" >> "$output_script"
   dos2unix "$output_script" 2> /dev/null
 }
-
 
 systemd_install() {
   mkdir -p "$(dirname $INSTALL_PATH)"
@@ -140,7 +134,6 @@ EOF
   systemctl enable "$(basename "$SYSTEMD_SERVICE_PATH")"
 }
 
-
 systemd_uninstall() {
   systemctl stop "$(basename "$SYSTEMD_SERVICE_PATH")"
   systemctl disable "$(basename "$SYSTEMD_SERVICE_PATH")"
@@ -162,13 +155,13 @@ try_send() {
       echo "If you didn't enable the virtual serial, ignore this message."
       return 0
     fi
-    sleep 1;
+    sleep 1
     count=$((count + 1))
   done
   # Linux host must send any dummy data first to finish initialization of rpmsg
   # on the coprocessor side. This message should be discarded.
   # See: https://github.com/OpenAMP/open-amp/issues/182
-  printf "DUMMY" >$RPMSG_DIR
+  printf "DUMMY" > $RPMSG_DIR
   echo "Virtual serial $RPMSG_DIR connection established."
 }
 
@@ -210,7 +203,7 @@ case "$1" in
     ;;
   send-msg)
     autodetect_board
-    echo "${@:2}" >$RPMSG_DIR
+    echo "${@:2}" > $RPMSG_DIR
     ;;
   send-file)
     autodetect_board
