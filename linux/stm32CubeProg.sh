@@ -1,20 +1,18 @@
 #!/bin/bash
-set -o nounset                              # Treat unset variables as an error
-#set -x
+set -o nounset # Treat unset variables as an error
 STM32CP_CLI=STM32_Programmer.sh
 ADDRESS=0x8000000
-ERASE=
-MODE=
-PORT=
-OPTS=
+ERASE=""
+MODE=""
+PORT=""
+OPTS=""
 
 ###############################################################################
 ## Help function
-usage()
-{
+usage() {
   echo "############################################################"
   echo "##"
-  echo "## `basename $0` <protocol> <file_path> [OPTIONS]"
+  echo "## $(basename "$0") <protocol> <file_path> [OPTIONS]"
   echo "##"
   echo "## protocol:"
   echo "##   0: SWD"
@@ -34,17 +32,14 @@ usage()
   echo "##       -rst: Reset system"
   echo "##       -s: start automatically (optional)"
   echo "############################################################"
-  exit $1
+  exit "$1"
 }
 
-
 check_tool() {
-  command -v $STM32CP_CLI >/dev/null 2>&1
-  if [ $? != 0 ]; then
+  if ! command -v $STM32CP_CLI > /dev/null 2>&1; then
     export PATH="$HOME/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin":$PATH
   fi
-  command -v $STM32CP_CLI >/dev/null 2>&1
-  if [ $? != 0 ]; then
+  if ! command -v $STM32CP_CLI > /dev/null 2>&1; then
     echo "$STM32CP_CLI not found."
     echo "Please install it or add '<STM32CubeProgrammer path>/bin' to your PATH environment:"
     echo "https://www.st.com/en/development-tools/stm32cubeprog.html"
@@ -56,8 +51,8 @@ check_tool() {
 check_tool
 
 if [ $# -lt 2 ]; then
-    echo "Not enough arguments!"
-    usage 2
+  echo "Not enough arguments!"
+  usage 2
 fi
 
 # Parse options
@@ -65,8 +60,8 @@ PROTOCOL=$1
 FILEPATH=$2
 # Protocol $1
 # 1x: Erase all sectors
-if [ $1 -ge 10 ]; then
-  ERASE='-e all'
+if [ "$1" -ge 10 ]; then
+  ERASE="yes"
   PROTOCOL=$(($1 - 10))
 fi
 # Protocol $1
@@ -75,29 +70,32 @@ fi
 # 2: DFU
 case $PROTOCOL in
   0)
-    PORT='SWD'
-    MODE='mode=UR'
-    shift 2;;
+    PORT="SWD"
+    MODE="mode=UR"
+    shift 2
+    ;;
   1)
     if [ $# -lt 3 ]; then
       usage 3
     else
       PORT=$3
       shift 3
-    fi;;
+    fi
+    ;;
   2)
-    PORT='USB1'
-    shift 2;;
+    PORT="USB1"
+    shift 2
+    ;;
   *)
     echo "Protocol unknown!"
-    usage 4;;
+    usage 4
+    ;;
 esac
 
 if [ $# -gt 0 ]; then
-  OPTS="$@"
+  OPTS="$*"
 fi
 
-${STM32CP_CLI} -c port=${PORT} ${MODE} ${ERASE} -q -d ${FILEPATH} ${ADDRESS} ${OPTS}
+${STM32CP_CLI} -c port=${PORT} ${MODE} ${ERASE:+"-e all"} -q -d "${FILEPATH}" ${ADDRESS} "${OPTS}"
 
-exit 0
-
+exit $?
