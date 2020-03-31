@@ -1,0 +1,57 @@
+# Set the default behavior, in case people don't have core.autocrlf set.
+* text=auto
+
+# Explicitly declare text files you want to always be normalized and converted
+# to native line endings on checkout.
+.editorconfig text eol=lf
+.flake8 text eol=lf
+.gitattributes text eol=lf
+.gitignore text eol=lf
+
+*.1 text eol=lf
+*.AUTHORS eol=lf
+*.ac text eol=lf
+*.am text eol=lf
+*.bat text eol=crlf
+*.c text eol=lf
+*.ChangeLog eol=lf
+*.cmake text eol=lf
+*.cpp text eol=lf
+*.css text eol=lf
+*.h text eol=lf
+*.html text eol=lf
+*.in text eol=lf
+*.java text eol=lf
+*.json text eol=lf
+*.log text eol=lf
+*.lsusb text eol=lf
+*.md text eol=lf
+*.MD text eol=lf
+*.mf text eol=lf
+*.old text eol=lf
+*.patch text eol=lf
+*.pde text eol=lf
+*.properties text eol=lf
+*.py text eol=lf
+*.rules text eol=lf
+*.s text eol=lf
+*.S text eol=lf
+*.sh text eol=lf
+*.spec text eol=lf
+*.txt text eol=lf
+*.yml text eol=lf
+
+# Denote all files that are truly binary and should not be modified.
+dfu-prefix binary
+dfu-suffix binary
+dfu-util binary
+upload-reset binary
+hid-flash binary
+*.class binary
+*.dll binary
+*.exe binary
+*.jar binary
+*.jpg binary
+*.pdf binary
+*.png binary
+
