@@ -692,10 +692,10 @@ def print_syswkup_h():
         num = p[2].replace("SYS_WKUP", "")
         if len(num) == 0:
             s1 = "#ifdef PWR_WAKEUP_PIN1\n"
-            s1 += "SYS_WKUP1"  # single SYS_WKUP for this product
+            s1 += "  SYS_WKUP1"  # single SYS_WKUP for this product
         else:
             s1 = "#ifdef PWR_WAKEUP_PIN%i\n" % (int(num) + inc)
-            s1 += "SYS_WKUP" + str(int(num) + inc)
+            s1 += "  SYS_WKUP" + str(int(num) + inc)
         s1 += " = " + p[0] + ","
         if (inc == 1) and (p[0] != "NC"):
             s1 += " /* " + p[2] + " */"
