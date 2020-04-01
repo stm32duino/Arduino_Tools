@@ -66,9 +66,24 @@ goto :opt
 :opt
 shift
 shift
+goto :optloop
+
+:optloop
+if "%~1"=="-o" goto :offset
 if "%~1"=="" goto :prog
-set OPTS=%1 %2 %3 %4 %5 %6 %7 %8 %9
-goto :prog
+set OPTS=%OPTS% %1
+shift
+goto :optloop
+
+:offset
+if "%~2"=="" set ERROR=2 & goto :usage
+set OFFSET=%~2
+SET /A ADDOFF=%ADDRESS%+%OFFSET%
+cmd /C exit %ADDOFF%
+set "ADDRESS=0x%=ExitCode%"
+shift
+shift
+goto :optloop
 
 :prog
 %STM32CP_CLI% -c port=%PORT% %MODE% %ERASE% -q -d %FILEPATH% %ADDRESS% %OPTS%
@@ -94,4 +109,5 @@ exit 0
   echo   Ex: -g: Run the code at the specified address
   echo       -rst: Reset system
   echo       -s: start automatically (optional)
+  echo       -o: offset address (optional). Ex: -o 0x2000
   exit %ERROR%
