@@ -913,7 +913,7 @@ try:
     config_file = open(config_filename, "r")
 except IOError:
     print("Please set your configuration in '%s' file" % config_filename)
-    config_file = open(config_filename, "w")
+    config_file = open(config_filename, "w", newline='\n')
     if sys.platform.startswith("win32"):
         print("Platform is Windows")
         cubemxdir = (
@@ -1024,10 +1024,10 @@ for mcu_file in mcu_list:
     # open output file
     if os.path.isfile(output_c_filename):
         os.remove(output_c_filename)
-    out_c_file = open(output_c_filename, "w")
+    out_c_file = open(output_c_filename, "w", newline='\n')
     if os.path.isfile(output_h_filename):
         os.remove(output_h_filename)
-    out_h_file = open(output_h_filename, "w")
+    out_h_file = open(output_h_filename, "w", newline='\n')
 
     # open input file
     xml_mcu = parse(input_file_name)
