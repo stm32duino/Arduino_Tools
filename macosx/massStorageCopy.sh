@@ -56,8 +56,16 @@ if [ ! -f "$bin_filepath" ]; then
   exit 2
 fi
 
+# Add short node name
+IFS=' ,\t' read -ra mnt_list <<< "$mountpoint_name"
+for mnt in "${mnt_list[@]}"; do
+  if [[ "$mnt" == "NODE_"* ]]; then
+    mountpoint_name="${mountpoint_name},${mnt//E_/_}"
+  fi
+done
+
 # Search the mountpoint
-IFS=',' read -ra mnt_list <<< "$mountpoint_name"
+IFS=' ,\t' read -ra mnt_list <<< "$mountpoint_name"
 for mnt in "${mnt_list[@]}"; do
   mnt_path_list=($(df -Hl | grep -v "Mounted on" | rev | cut -d' ' -f1 | rev | sort -u | grep "$mnt"))
   if [ ${#mnt_path_list[@]} -ne 0 ]; then
