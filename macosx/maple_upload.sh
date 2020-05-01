@@ -40,18 +40,7 @@ else
   dfuse_addr=""
 fi
 
-#DFU_UTIL=/usr/local/bin/dfu-util
-DFU_UTIL=${DIR}/dfu-util/dfu-util
-if [ ! -x "${DFU_UTIL}" ]; then
-  DFU_UTIL=/opt/local/bin/dfu-util
-fi
-
-if [ ! -x ${DFU_UTIL} ]; then
-  echo "$0: error: cannot find ${DFU_UTIL}" >&2
-  exit 2
-fi
-
-${DFU_UTIL} -d "${usbID}" -a "${altID}" -D "${binfile}" -R ${dfuse_addr} -R
+"${DIR}/dfu-util.sh" -d "${usbID}" -a "${altID}" -D "${binfile}" -R ${dfuse_addr} -R
 
 echo -n Waiting for "${dummy_port_fullpath}" serial...
 
