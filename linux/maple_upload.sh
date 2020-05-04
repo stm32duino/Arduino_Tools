@@ -34,7 +34,7 @@ if ! "${DIR}/upload-reset" "${dummy_port_fullpath}" 750; then
   sleep 2 # Wait for user to see message.
 fi
 
-COUNTER=10
+COUNTER=5
 while
   "${DIR}/dfu-util.sh" -d "${usbID}" -a "${altID}" -D "${binfile}" ${dfuse_addr} -R
   ((ret = $?))
