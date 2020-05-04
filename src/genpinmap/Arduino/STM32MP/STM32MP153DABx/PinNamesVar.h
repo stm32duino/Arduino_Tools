@@ -25,6 +25,6 @@
 #endif
 /* USB */
 #ifdef USBCON
-USB_OTG_HS_SOF = PA_8,
-USB_OTG_HS_ID = PA_10,
+  USB_OTG_HS_SOF = PA_8,
+  USB_OTG_HS_ID = PA_10,
 #endif

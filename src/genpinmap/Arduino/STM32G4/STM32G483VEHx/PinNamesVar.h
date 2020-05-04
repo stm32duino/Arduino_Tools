@@ -25,6 +25,6 @@
 #endif
 /* USB */
 #ifdef USBCON
-USB_DM = PA_11,
-USB_DP = PA_12,
+  USB_DM = PA_11,
+  USB_DP = PA_12,
 #endif
