@@ -26,8 +26,7 @@ DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # 750ms to 1500ms seems to work on my Mac
 # This is less critical now that we automatically retry dfu-util
 
-if ! "${DIR}/upload-reset" "${dummy_port_fullpath}" 750
-then
+if ! "${DIR}/upload-reset" "${dummy_port_fullpath}" 750; then
   echo "****************************************" >&2
   echo "* Could not automatically reset device *" >&2
   echo "* Please manually reset device!        *" >&2
@@ -36,10 +35,11 @@ then
 fi
 
 COUNTER=10
-while "${DIR}/dfu-util.sh" -d "${usbID}" -a "${altID}" -D "${binfile}" ${dfuse_addr} -R ; ((ret=$?))
+while
+  "${DIR}/dfu-util.sh" -d "${usbID}" -a "${altID}" -D "${binfile}" ${dfuse_addr} -R
+  ((ret = $?))
 do
-  if [ $ret -eq 74 ] && [ $((--COUNTER)) -gt 0 ]
-  then
+  if [ $ret -eq 74 ] && [ $((--COUNTER)) -gt 0 ]; then
     # I/O error, probably because no DFU device was found
     echo "Trying ${COUNTER} more time(s)" >&2
     sleep 1
@@ -56,8 +56,7 @@ while [ ! -r "${dummy_port_fullpath}" ] && ((COUNTER--)); do
   sleep 0.1
 done
 
-if [ $COUNTER -eq -1 ]
-then
+if [ $COUNTER -eq -1 ]; then
   echo " Timed out." >&2
   exit 1
 else
