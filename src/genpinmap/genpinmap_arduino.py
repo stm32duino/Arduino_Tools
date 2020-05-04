@@ -789,7 +789,7 @@ def print_usb_h():
         out_h_file.write("/* USB */\n")
         out_h_file.write("#ifdef USBCON\n")
         for p in usb_list + usb_otgfs_list + usb_otghs_list:
-            out_h_file.write(p[2] + " = " + p[0] + ",\n")
+            out_h_file.write("  " + p[2] + " = " + p[0] + ",\n")
         out_h_file.write("#endif\n")
 
 
