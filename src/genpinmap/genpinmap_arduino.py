@@ -28,7 +28,12 @@ spisclk_list = []  # 'PIN','name','SPISCLK'
 cantd_list = []  # 'PIN','name','CANTD'
 canrd_list = []  # 'PIN','name','CANRD'
 eth_list = []  # 'PIN','name','ETH'
-qspi_list = []  # 'PIN','name','QUADSPI'
+quadspidata0_list = []  # 'PIN','name','QUADSPIDATA0'
+quadspidata1_list = []  # 'PIN','name','QUADSPIDATA1'
+quadspidata2_list = []  # 'PIN','name','QUADSPIDATA2'
+quadspidata3_list = []  # 'PIN','name','QUADSPIDATA3'
+quadspisclk_list = []  # 'PIN','name','QUADSPISCLK'
+quadspissel_list = []  # 'PIN','name','QUADSPISSEL'
 syswkup_list = []  # 'PIN','name','SYSWKUP'
 usb_list = []  # 'PIN','name','USB'
 usb_otgfs_list = []  # 'PIN','name','USB'
@@ -267,9 +272,30 @@ def store_eth(pin, name, signal):
 
 # function to store QSPI pins
 def store_qspi(pin, name, signal):
-    if isPinAndSignalInList(pin, signal, qspi_list):
-        return
-    qspi_list.append([pin, name, signal])
+    if "_IO0" in signal:
+        if isPinAndSignalInList(pin, signal, quadspidata0_list):
+            return
+        quadspidata0_list.append([pin, name, signal])
+    if "_IO1" in signal:
+        if isPinAndSignalInList(pin, signal, quadspidata1_list):
+            return
+        quadspidata1_list.append([pin, name, signal])
+    if "_IO2" in signal:
+        if isPinAndSignalInList(pin, signal, quadspidata2_list):
+            return
+        quadspidata2_list.append([pin, name, signal])
+    if "_IO3" in signal:
+        if isPinAndSignalInList(pin, signal, quadspidata3_list):
+            return
+        quadspidata3_list.append([pin, name, signal])
+    if "_CLK" in signal:
+        if isPinAndSignalInList(pin, signal, quadspisclk_list):
+            return
+        quadspisclk_list.append([pin, name, signal])
+    if "_NCS" in signal:
+        if isPinAndSignalInList(pin, signal, quadspissel_list):
+            return
+        quadspissel_list.append([pin, name, signal])
 
 
 # function to store SYS pins
@@ -382,8 +408,33 @@ def print_all_lists():
             print_can(cantd_list)
     if print_list_header("ETHERNET", "Ethernet", "ETH", eth_list):
         print_eth()
-    if print_list_header("QUADSPI", "QUADSPI", "QSPI", qspi_list):
-        print_qspi()
+    inst = "QUADSPI"
+    mod = "QSPI"
+    if len(quadspidata0_list) > 0 and "OCTOSPI" in quadspidata0_list[0][2]:
+        inst = "OCTOSPI"
+        mod = "OSPI"
+    if print_list_header(
+        inst,
+        inst + "_DATA0",
+        mod,
+        quadspidata0_list,
+        quadspidata1_list,
+        quadspidata2_list,
+        quadspidata3_list,
+        quadspisclk_list,
+        quadspissel_list,
+    ):
+        print_qspi(quadspidata0_list)
+        if print_list_header("", inst + "_DATA1", mod, quadspidata1_list):
+            print_qspi(quadspidata1_list)
+        if print_list_header("", inst + "_DATA2", mod, quadspidata2_list):
+            print_qspi(quadspidata2_list)
+        if print_list_header("", inst + "_DATA3", mod, quadspidata3_list):
+            print_qspi(quadspidata3_list)
+        if print_list_header("", inst + "_SCLK", mod, quadspisclk_list):
+            print_qspi(quadspisclk_list)
+        if print_list_header("", inst + "_SSEL", mod, quadspissel_list):
+            print_qspi(quadspissel_list)
     if print_list_header("USB", "USB", "PCD", usb_list, usb_otgfs_list, usb_otghs_list):
         print_usb(usb_list)
         if print_list_header("", "USB_OTG_FS", "PCD", usb_otgfs_list):
@@ -644,13 +695,20 @@ def print_eth():
     )
 
 
-def print_qspi():
+def print_qspi(list):
     prev_s = ""
-    for p in qspi_list:
+
+    for p in list:
         result = get_gpio_af_num(p[1], p[2])
         s1 = "%-10s" % ("  {" + p[0] + ",")
-        # 2nd element is the QUADSPI_XXXX signal
-        s1 += "QUADSPI, STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, " + result + ")},"
+        # 2nd element is the XXXXSPI_YYYY signal
+        if "OCTOSPIM_P1" in p[2]:
+            s1 += "%-8s" % "OCTOSPI1,"
+        elif "OCTOSPIM_P2" in p[2]:
+            s1 += "%-8s" % "OCTOSPI2,"
+        else:
+            s1 += "%-8s" % "QUADSPI,"
+        s1 += " STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, " + result + ")},"
         # check duplicated lines, only signal differs
         if prev_s == s1:
             s1 = "|" + p[2]
@@ -822,7 +880,12 @@ def sort_my_lists():
     cantd_list.sort(key=natural_sortkey)
     canrd_list.sort(key=natural_sortkey)
     eth_list.sort(key=natural_sortkey)
-    qspi_list.sort(key=natural_sortkey)
+    quadspidata0_list.sort(key=natural_sortkey)
+    quadspidata1_list.sort(key=natural_sortkey)
+    quadspidata2_list.sort(key=natural_sortkey)
+    quadspidata3_list.sort(key=natural_sortkey)
+    quadspisclk_list.sort(key=natural_sortkey)
+    quadspissel_list.sort(key=natural_sortkey)
     syswkup_list.sort(key=natural_sortkey2)
     usb_list.sort(key=natural_sortkey)
     usb_otgfs_list.sort(key=natural_sortkey)
@@ -848,7 +911,12 @@ def clean_all_lists():
     del cantd_list[:]
     del canrd_list[:]
     del eth_list[:]
-    del qspi_list[:]
+    del quadspidata0_list[:]
+    del quadspidata1_list[:]
+    del quadspidata2_list[:]
+    del quadspidata3_list[:]
+    del quadspisclk_list[:]
+    del quadspissel_list[:]
     del syswkup_list[:]
     del usb_list[:]
     del usb_otgfs_list[:]
@@ -893,7 +961,7 @@ def parse_pins():
                     store_can(pin, name, sig)
                 if "ETH" in sig:
                     store_eth(pin, name, sig)
-                if "QUADSPI" in sig:
+                if "QUADSPI" in sig or "OCTOSPI" in sig:
                     store_qspi(pin, name, sig)
                 if "SYS_" or "PWR_" in sig:
                     store_sys(pin, name, sig)
