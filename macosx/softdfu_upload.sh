@@ -17,7 +17,7 @@ if [ -e $dummy_port_fullpath ]; then
 fi
 
 
-DFU_UTIL=$(dirname $0)/dfu_util/dfu-util
+DFU_UTIL=$(dirname $0)/dfu-util/dfu-util
 if [ ! -x ${DFU_UTIL} ]; then
     echo "$0: error: cannot find ${DFU_UTIL}" >&2
     exit 2
