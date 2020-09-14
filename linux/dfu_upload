@@ -17,12 +17,12 @@ if [ -e $dummy_port_fullpath ]; then
 fi
 
 if [ $(uname -m) == 'x86_64' ]; then
-	dfu_util_arch='linux64'
+	dfu_util_arch='_x86_64'
 else
-	dfu_util_arch='linux32'
+	dfu_util_arch=''
 fi
 
-DFU_UTIL=$(dirname $0)/dfu_util/$dfu_util_arch/dfu-util
+DFU_UTIL=$(dirname $0)/dfu-util$dfu_util_arch/dfu-util
 if [ ! -x ${DFU_UTIL} ]; then
     echo "$0: error: cannot find ${DFU_UTIL}" >&2
     exit 2
