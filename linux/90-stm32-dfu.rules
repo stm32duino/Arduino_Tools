@@ -1,0 +1,2 @@
+ATTRS{idProduct}=="df11", ATTRS{idVendor}=="0483", MODE="666", GROUP="plugdev"
+ATTRS{idProduct}=="5740", ATTRS{idVendor}=="0483", MODE="666", GROUP="plugdev", ENV{ID_MM_DEVICE_IGNORE}="1"
