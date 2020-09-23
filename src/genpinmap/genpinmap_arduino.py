@@ -13,6 +13,7 @@ mcu_file = ""
 mcu_list = []  # 'name'
 io_list = []  # 'PIN','name'
 alt_list = []  # 'PIN','name'
+dualpad_list = []  # 'PIN','name'
 remap_list = []  # 'PIN','name'
 adclist = []  # 'PIN','name','ADCSignal'
 daclist = []  # 'PIN','name','DACSignal'
@@ -392,6 +393,7 @@ def print_all_lists():
     if print_list_header("SD", "SD", "SD", sd_list):
         print_sd()
     # Print specific PinNames in header file
+    print_dualpad_h()
     print_alt_h()
     print_syswkup_h()
     print_usb_h()
@@ -461,7 +463,7 @@ def print_adc():
             else:
                 prev_p = p[0]
                 alt_index = 0
-            s1 = "%-15s" % ("  {" + p[0] + ",")
+            s1 = "%-16s" % ("  {" + p[0] + ",")
             a = p[2].split("_")
             inst = a[0].replace("ADC", "")
             if len(inst) == 0:
@@ -523,7 +525,7 @@ def print_i2c(lst):
         else:
             prev_p = p[0]
             alt_index = 0
-        s1 = "%-15s" % ("  {" + p[0] + ",")
+        s1 = "%-16s" % ("  {" + p[0] + ",")
         # 2nd element is the I2C XXX signal
         b = p[2].split("_")[0]
         s1 += (
@@ -555,7 +557,7 @@ def print_pwm():
         else:
             prev_p = p[0]
             alt_index = 0
-        s1 = "%-15s" % ("  {" + p[0] + ",")
+        s1 = "%-16s" % ("  {" + p[0] + ",")
         # 2nd element is the PWM signal
         a = p[2].split("_")
         inst = a[0]
@@ -593,7 +595,7 @@ def print_uart(lst):
         else:
             prev_p = p[0]
             alt_index = 0
-        s1 = "%-15s" % ("  {" + p[0] + ",")
+        s1 = "%-16s" % ("  {" + p[0] + ",")
         # 2nd element is the UART_XX signal
         b = p[2].split("_")[0]
         s1 += "%-9s" % (b[: len(b) - 1] + b[len(b) - 1 :] + ",")
@@ -799,6 +801,15 @@ def print_usb(lst):
         )
 
 
+def print_dualpad_h():
+    if len(dualpad_list) != 0:
+        out_h_file.write("/* Dual pad pin name */\n")
+        for p in dualpad_list:
+            s1 = "  %-12s = %-5s | %s,\n" % (p[0], p[0].split("_C")[0], "ALTC",)
+            out_h_file.write(s1)
+    out_h_file.write("\n")
+
+
 def print_alt_h():
     if len(alt_list) == 0:
         out_h_file.write("/* No alternate */\n")
@@ -877,6 +888,7 @@ def natural_sortkey2(list_2_elem):
 def sort_my_lists():
     io_list.sort(key=natural_sortkey)
     alt_list.sort(key=natural_sortkey)
+    dualpad_list.sort(key=natural_sortkey)
     remap_list.sort(key=natural_sortkey)
     adclist.sort(key=natural_sortkey)
     daclist.sort(key=natural_sortkey)
@@ -911,6 +923,7 @@ def sort_my_lists():
 def clean_all_lists():
     del io_list[:]
     del alt_list[:]
+    del dualpad_list[:]
     del remap_list[:]
     del adclist[:]
     del daclist[:]
@@ -943,7 +956,7 @@ def clean_all_lists():
 
 def parse_pins():
     print(" * Getting pins per Ips...")
-    pinregex = r"^(P[A-Z][0-9][0-5]?)|^(ANA[0-9])"
+    pinregex = r"^(P[A-Z][0-9][0-5]?[_]?[C]?)|^(ANA[0-9])"
     itemlist = xml_mcu.getElementsByTagName("Pin")
     for s in itemlist:
         m = re.match(pinregex, s.attributes["Name"].value)
@@ -956,7 +969,9 @@ def parse_pins():
                 pin = m.group(0)[:3] + "_" + m.group(0)[3:]
             name = s.attributes["Name"].value.strip()  # full name: "PF0 / OSC_IN"
             if s.attributes["Type"].value in ["I/O", "MonoIO"]:
-                if (
+                if pin.endswith("_C"):
+                    store_pin(pin, name, dualpad_list)
+                elif (
                     "Variant" in s.attributes
                     and "REMAP" in s.attributes["Variant"].value
                 ):
@@ -1140,7 +1155,8 @@ for mcu_file in mcu_list:
         )
     )
     print("   - {} I/O pins".format(len(io_list)))
-
+    if len(dualpad_list):
+        print("   - {} dual pad".format(len(dualpad_list)))
     if len(remap_list):
         print("   - {} remap pins".format(len(remap_list)))
     print("   - {} ALT I/O pins".format(len(alt_list)))
