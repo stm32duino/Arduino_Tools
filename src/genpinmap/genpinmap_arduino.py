@@ -726,44 +726,6 @@ def print_qspi(list):
     )
 
 
-def print_syswkup_h():
-    if len(syswkup_list) == 0:
-        out_h_file.write("/* NO SYS_WKUP */\n")
-    else:
-        out_h_file.write("/* SYS_WKUP */\n")
-        # H7xx and F446 start from 0, inc by 1
-        num = syswkup_list[0][2].replace("SYS_WKUP", "")
-        inc = 0
-        if num == "0":
-            inc = 1
-        # Fill list with missing SYS_WKUPx set to NC
-        i = 0
-        while i < 8:
-            num = 0
-            if len(syswkup_list) > i:
-                n = syswkup_list[i][2].replace("SYS_WKUP", "")
-                if len(n) != 0:
-                    num = int(n) if inc == 1 else int(n) - 1
-            x = i if inc == 1 else i + 1
-            if num != i:
-                syswkup_list.insert(i, ["NC", "NC_" + str(x), "SYS_WKUP" + str(x)])
-            i += 1
-        # print pin name under switch
-        for p in syswkup_list:
-            num = p[2].replace("SYS_WKUP", "")
-            if len(num) == 0:
-                s1 = "#ifdef PWR_WAKEUP_PIN1\n"
-                s1 += "  SYS_WKUP1"  # single SYS_WKUP for this product
-            else:
-                s1 = "#ifdef PWR_WAKEUP_PIN%i\n" % (int(num) + inc)
-                s1 += "  SYS_WKUP" + str(int(num) + inc)
-            s1 += " = " + p[0] + ","
-            if (inc == 1) and (p[0] != "NC"):
-                s1 += " /* " + p[2] + " */"
-            s1 += "\n#endif\n"
-            out_h_file.write(s1)
-
-
 def print_sd():
     for p in sd_list:
         result = get_gpio_af_num(p[1], p[2])
@@ -840,6 +802,44 @@ def print_usb(lst):
 #endif
 """
         )
+
+
+def print_syswkup_h():
+    if len(syswkup_list) == 0:
+        out_h_file.write("/* NO SYS_WKUP */\n")
+    else:
+        out_h_file.write("/* SYS_WKUP */\n")
+        # H7xx and F446 start from 0, inc by 1
+        num = syswkup_list[0][2].replace("SYS_WKUP", "")
+        inc = 0
+        if num == "0":
+            inc = 1
+        # Fill list with missing SYS_WKUPx set to NC
+        i = 0
+        while i < 8:
+            num = 0
+            if len(syswkup_list) > i:
+                n = syswkup_list[i][2].replace("SYS_WKUP", "")
+                if len(n) != 0:
+                    num = int(n) if inc == 1 else int(n) - 1
+            x = i if inc == 1 else i + 1
+            if num != i:
+                syswkup_list.insert(i, ["NC", "NC_" + str(x), "SYS_WKUP" + str(x)])
+            i += 1
+        # print pin name under switch
+        for p in syswkup_list:
+            num = p[2].replace("SYS_WKUP", "")
+            if len(num) == 0:
+                s1 = "#ifdef PWR_WAKEUP_PIN1\n"
+                s1 += "  SYS_WKUP1"  # single SYS_WKUP for this product
+            else:
+                s1 = "#ifdef PWR_WAKEUP_PIN%i\n" % (int(num) + inc)
+                s1 += "  SYS_WKUP" + str(int(num) + inc)
+            s1 += " = " + p[0] + ","
+            if (inc == 1) and (p[0] != "NC"):
+                s1 += " /* " + p[2] + " */"
+            s1 += "\n#endif\n"
+            out_h_file.write(s1)
 
 
 def print_usb_h():
