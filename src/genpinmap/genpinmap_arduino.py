@@ -176,7 +176,8 @@ def store_pin(pin, name, dest_list):
 
 # function to store ADC list
 def store_adc(pin, name, signal):
-    adclist.append([pin, name, signal])
+    if "IN" in signal:
+        adclist.append([pin, name, signal])
 
 
 # function to store DAC list
@@ -455,24 +456,23 @@ def print_adc():
     alt_index = 0
 
     for p in adclist:
-        if "IN" in p[2]:
-            if p[0] == prev_p:
-                p[0] += "_ALT%d" % alt_index
-                alt_index += 1
-                store_pin(p[0], p[1], alt_list)
-            else:
-                prev_p = p[0]
-                alt_index = 0
-            s1 = "%-16s" % ("  {" + p[0] + ",")
-            a = p[2].split("_")
-            inst = a[0].replace("ADC", "")
-            if len(inst) == 0:
-                inst = "1"  # single ADC for this product
-            s1 += "%-7s" % ("ADC" + inst + ",")
-            chan = re.sub("IN[N|P]?", "", a[1])
-            s1 += s_pin_data + chan
-            s1 += ", 0)}, // " + p[2] + "\n"
-            out_c_file.write(s1)
+        if p[0] == prev_p:
+            p[0] += "_ALT%d" % alt_index
+            alt_index += 1
+            store_pin(p[0], p[1], alt_list)
+        else:
+            prev_p = p[0]
+            alt_index = 0
+        s1 = "%-16s" % ("  {" + p[0] + ",")
+        a = p[2].split("_")
+        inst = a[0].replace("ADC", "")
+        if len(inst) == 0:
+            inst = "1"  # single ADC for this product
+        s1 += "%-7s" % ("ADC" + inst + ",")
+        chan = re.sub("IN[N|P]?", "", a[1])
+        s1 += s_pin_data + chan
+        s1 += ", 0)}, // " + p[2] + "\n"
+        out_c_file.write(s1)
     out_c_file.write(
         """  {NC,    NP,    0}
 };
@@ -986,27 +986,28 @@ def parse_pins():
                 sig = a.attributes["Name"].value.strip()
                 if sig.startswith("ADC"):
                     store_adc(pin, name, sig)
-                if all(["DAC" in sig, "_OUT" in sig]):
+                elif all(["DAC" in sig, "_OUT" in sig]):
                     store_dac(pin, name, sig)
-                if re.match("^I2C", sig) is not None:  # ignore FMPI2C
+                elif re.match("^I2C", sig) is not None:  # ignore FMPI2C
                     store_i2c(pin, name, sig)
-                if re.match("^TIM", sig) is not None:  # ignore HRTIM
+                elif re.match("^TIM", sig) is not None:  # ignore HRTIM
                     store_pwm(pin, name, sig)
-                if re.match("^(LPU|US|U)ART", sig) is not None:
+                elif re.match("^(LPU|US|U)ART", sig) is not None:
                     store_uart(pin, name, sig)
-                if "SPI" in sig:
-                    store_spi(pin, name, sig)
-                if "CAN" in sig:
+                elif "SPI" in sig:
+                    if "QUADSPI" in sig or "OCTOSPI" in sig:
+                        store_qspi(pin, name, sig)
+                    else:
+                        store_spi(pin, name, sig)
+                elif "CAN" in sig:
                     store_can(pin, name, sig)
-                if "ETH" in sig:
+                elif "ETH" in sig:
                     store_eth(pin, name, sig)
-                if "QUADSPI" in sig or "OCTOSPI" in sig:
-                    store_qspi(pin, name, sig)
-                if "SYS_" or "PWR_" in sig:
+                elif "SYS_" in sig or "PWR_" in sig:
                     store_sys(pin, name, sig)
-                if "USB" in sig:
+                elif "USB" in sig:
                     store_usb(pin, name, sig)
-                if re.match("^SD(IO|MMC)", sig) is not None:
+                elif re.match("^SD(IO|MMC)", sig) is not None:
                     store_sd(pin, name, sig)
 
 
