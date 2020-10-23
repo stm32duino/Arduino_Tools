@@ -452,17 +452,9 @@ def print_adc():
         s_pin_data += "_ADC_CONTROL"
     s_pin_data += ", GPIO_NOPULL, 0, "
 
-    prev_p = ""
-    alt_index = 0
+    manage_alternate(adclist)
 
     for p in adclist:
-        if p[0] == prev_p:
-            p[0] += "_ALT%d" % alt_index
-            alt_index += 1
-            store_pin(p[0], p[1], alt_list)
-        else:
-            prev_p = p[0]
-            alt_index = 0
         s1 = "%-16s" % ("  {" + p[0] + ",")
         a = p[2].split("_")
         inst = a[0].replace("ADC", "")
@@ -514,17 +506,9 @@ def print_dac():
 
 
 def print_i2c(lst):
-    prev_p = ""
-    alt_index = 0
+    manage_alternate(lst)
     for p in lst:
         result = get_gpio_af_num(p[1], p[2])
-        if p[0] == prev_p:
-            p[0] += "_ALT%d" % alt_index
-            store_pin(p[0], p[1], alt_list)
-            alt_index += 1
-        else:
-            prev_p = p[0]
-            alt_index = 0
         s1 = "%-16s" % ("  {" + p[0] + ",")
         # 2nd element is the I2C XXX signal
         b = p[2].split("_")[0]
@@ -546,17 +530,9 @@ def print_i2c(lst):
 
 
 def print_pwm():
-    prev_p = ""
-    alt_index = 0
+    manage_alternate(pwm_list)
     for p in pwm_list:
         result = get_gpio_af_num(p[1], p[2])
-        if p[0] == prev_p:
-            p[0] += "_ALT%d" % alt_index
-            store_pin(p[0], p[1], alt_list)
-            alt_index += 1
-        else:
-            prev_p = p[0]
-            alt_index = 0
         s1 = "%-16s" % ("  {" + p[0] + ",")
         # 2nd element is the PWM signal
         a = p[2].split("_")
@@ -584,17 +560,9 @@ def print_pwm():
 
 
 def print_uart(lst):
-    prev_p = ""
-    alt_index = 0
+    manage_alternate(lst)
     for p in lst:
         result = get_gpio_af_num(p[1], p[2])
-        if p[0] == prev_p:
-            p[0] += "_ALT%d" % alt_index
-            store_pin(p[0], p[1], alt_list)
-            alt_index += 1
-        else:
-            prev_p = p[0]
-            alt_index = 0
         s1 = "%-16s" % ("  {" + p[0] + ",")
         # 2nd element is the UART_XX signal
         b = p[2].split("_")[0]
@@ -616,17 +584,9 @@ def print_uart(lst):
 
 
 def print_spi(lst):
-    prev_p = ""
-    alt_index = 0
+    manage_alternate(lst)
     for p in lst:
         result = get_gpio_af_num(p[1], p[2])
-        if p[0] == prev_p:
-            p[0] += "_ALT%d" % alt_index
-            store_pin(p[0], p[1], alt_list)
-            alt_index += 1
-        else:
-            prev_p = p[0]
-            alt_index = 0
         s1 = "%-15s" % ("  {" + p[0] + ",")
         # 2nd element is the SPI_XXXX signal
         instance = p[2].split("_")[0].replace("SPI", "")
@@ -875,6 +835,20 @@ def print_usb_h():
 
 
 tokenize = re.compile(r"(\d+)|(\D+)").findall
+
+
+def manage_alternate(lst):
+    prev_p = ""
+    alt_index = 0
+    for index, p in enumerate(lst):
+        if p[0] == prev_p:
+            p[0] += "_ALT%d" % alt_index
+            lst[index] = p
+            store_pin(p[0], p[1], alt_list)
+            alt_index += 1
+        else:
+            prev_p = p[0]
+            alt_index = 0
 
 
 def natural_sortkey(list_2_elem):
