@@ -639,33 +639,34 @@ def print_eth():
 
 
 def print_qspi(lst):
-    prev_s = ""
-    wpin = width_format(lst)
-    if "OCTOSPIM_P1" in lst[0][2]:
-        winst = 7
-    else:
-        winst = 6
-    for p in lst:
-        result = get_gpio_af_num(p[1], p[2])
-        s1 = start_elem_format.format(p[0] + ",", width=wpin)
-        # 2nd element is the XXXXSPI_YYYY signal
-        if "OCTOSPIM_P1" in p[2]:
-            s1 += "OCTOSPI1,"
-        elif "OCTOSPIM_P2" in p[2]:
-            s1 += "OCTOSPI2,"
+    if lst:
+        prev_s = ""
+        wpin = width_format(lst)
+        if "OCTOSPIM_P1" in lst[0][2]:
+            winst = 7
         else:
-            s1 += "QUADSPI,"
-        s1 += " STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, " + result + ")},"
-        # check duplicated lines, only signal differs
-        if prev_s == s1:
-            s1 = "|" + p[2]
-        else:
-            if len(prev_s) > 0:
-                out_c_file.write("\n")
-            prev_s = s1
-            s1 += " // " + p[2]
-        out_c_file.write(s1 + "\n")
-    out_c_file.write(end_array_format.format("", w1=wpin - 3, w2=winst))
+            winst = 6
+        for p in lst:
+            result = get_gpio_af_num(p[1], p[2])
+            s1 = start_elem_format.format(p[0] + ",", width=wpin)
+            # 2nd element is the XXXXSPI_YYYY signal
+            if "OCTOSPIM_P1" in p[2]:
+                s1 += "OCTOSPI1,"
+            elif "OCTOSPIM_P2" in p[2]:
+                s1 += "OCTOSPI2,"
+            else:
+                s1 += "QUADSPI,"
+            s1 += " STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, " + result + ")},"
+            # check duplicated lines, only signal differs
+            if prev_s == s1:
+                s1 = "|" + p[2]
+            else:
+                if len(prev_s) > 0:
+                    out_c_file.write("\n")
+                prev_s = s1
+                s1 += " // " + p[2]
+            out_c_file.write(s1 + "\n")
+        out_c_file.write(end_array_format.format("", w1=wpin - 3, w2=winst))
 
 
 def print_sd():
@@ -687,54 +688,54 @@ def print_sd():
 
 
 def print_usb(lst):
-    use_hs_in_fs = False
-    nb_loop = 1
-    inst = "USB"
-    if lst == usb_otgfs_list:
-        inst = "USB_OTG_FS"
-    elif lst == usb_otghs_list:
-        inst = "USB_OTG_HS"
-        nb_loop = 2
-    wpin = width_format(lst)
-    winst = len(inst) - 1
-    for nb in range(nb_loop):
-        for p in lst:
-            result = get_gpio_af_num(p[1], p[2])
-            s1 = start_elem_format.format(p[0] + ",", width=wpin)
-            if lst == usb_otghs_list:
-                if nb == 0:
-                    if "ULPI" in p[2]:
-                        continue
-                    elif not use_hs_in_fs:
-                        out_c_file.write("#ifdef USE_USB_HS_IN_FS\n")
-                        use_hs_in_fs = True
-                else:
-                    if "ULPI" not in p[2]:
-                        continue
-                    elif use_hs_in_fs:
-                        out_c_file.write("#else\n")
-                        use_hs_in_fs = False
-
-            # 2nd element is the USB_XXXX signal
-            if not p[2].startswith("USB_D") and "VBUS" not in p[2]:
-                if "ID" not in p[2]:
-                    s1 += inst + ", STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, "
-                else:
-                    # ID pin: AF_PP + PULLUP
-                    s1 += inst + ", STM_PIN_DATA(STM_MODE_AF_OD, GPIO_PULLUP, "
-            else:
-                # USB_DM/DP and VBUS: INPUT + NOPULL
-                s1 += inst + ", STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, "
-            if result == "NOTFOUND":
-                s1 += "0)},"
-            else:
-                r = result.split(" ")
-                for af in r:
-                    s1 += af + ")},"
-            s1 += " // " + p[2] + "\n"
-            out_c_file.write(s1)
-
     if lst:
+        use_hs_in_fs = False
+        nb_loop = 1
+        inst = "USB"
+        if lst == usb_otgfs_list:
+            inst = "USB_OTG_FS"
+        elif lst == usb_otghs_list:
+            inst = "USB_OTG_HS"
+            nb_loop = 2
+        wpin = width_format(lst)
+        winst = len(inst) - 1
+        for nb in range(nb_loop):
+            for p in lst:
+                result = get_gpio_af_num(p[1], p[2])
+                s1 = start_elem_format.format(p[0] + ",", width=wpin)
+                if lst == usb_otghs_list:
+                    if nb == 0:
+                        if "ULPI" in p[2]:
+                            continue
+                        elif not use_hs_in_fs:
+                            out_c_file.write("#ifdef USE_USB_HS_IN_FS\n")
+                            use_hs_in_fs = True
+                    else:
+                        if "ULPI" not in p[2]:
+                            continue
+                        elif use_hs_in_fs:
+                            out_c_file.write("#else\n")
+                            use_hs_in_fs = False
+
+                # 2nd element is the USB_XXXX signal
+                if not p[2].startswith("USB_D") and "VBUS" not in p[2]:
+                    if "ID" not in p[2]:
+                        s1 += inst + ", STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, "
+                    else:
+                        # ID pin: AF_PP + PULLUP
+                        s1 += inst + ", STM_PIN_DATA(STM_MODE_AF_OD, GPIO_PULLUP, "
+                else:
+                    # USB_DM/DP and VBUS: INPUT + NOPULL
+                    s1 += inst + ", STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, "
+                if result == "NOTFOUND":
+                    s1 += "0)},"
+                else:
+                    r = result.split(" ")
+                    for af in r:
+                        s1 += af + ")},"
+                s1 += " // " + p[2] + "\n"
+                out_c_file.write(s1)
+
         if lst == usb_otghs_list:
             out_c_file.write("#endif /* USE_USB_HS_IN_FS */\n")
         out_c_file.write(end_array_format.format("", w1=wpin - 3, w2=winst))
