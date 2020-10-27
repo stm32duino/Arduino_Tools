@@ -296,6 +296,7 @@ def print_header():
  *
  *******************************************************************************
  * Automatically generated from {}
+ * CubeMX DB version {} release {}
  */
 #include "Arduino.h"
 #include "{}.h"
@@ -314,6 +315,8 @@ def print_header():
 """.format(
         datetime.datetime.now().year,
         os.path.basename(input_file_name),
+        cubemx_db_version,
+        cubemx_db_release,
         re.sub("\\.c$", "", out_c_filename),
     )
     out_c_file.write(s)
@@ -976,20 +979,18 @@ except IOError:
     config_file = open(config_filename, "w", newline="\n")
     if sys.platform.startswith("win32"):
         print("Platform is Windows")
-        cubemxdir = (
-            "C:\\Program Files\\STMicroelectronics\\STM32Cube\\STM32CubeMX\\db\\mcu"
-        )
+        cubemxdir = "C:\\Program Files\\STMicroelectronics\\STM32Cube\\STM32CubeMX"
     elif sys.platform.startswith("linux"):
         print("Platform is Linux")
-        cubemxdir = os.getenv("HOME") + "/STM32CubeMX/db/mcu"
+        cubemxdir = os.getenv("HOME") + "/STM32CubeMX"
     elif sys.platform.startswith("darwin"):
         print("Platform is Mac OSX")
         cubemxdir = (
-            "/Applications/STMicroelectronics/STM32CubeMX.app/Contents/Resources/db/mcu"
+            "/Applications/STMicroelectronics/STM32CubeMX.app/Contents/Resources"
         )
     else:
         print("Platform unknown")
-        cubemxdir = "<Set CubeMX install directory>/db/mcu"
+        cubemxdir = "<Set CubeMX install directory>"
     config_file.write(json.dumps({"CUBEMX_DIRECTORY": cubemxdir}))
     config_file.close()
     exit(1)
@@ -1049,21 +1050,33 @@ if not (os.path.isdir(cubemxdir)):
     )
     quit()
 
-cubemxdirIP = os.path.join(cubemxdir, "IP")
+cubemxdirMCU = os.path.join(cubemxdir, "db", "mcu")
+cubemxdirIP = os.path.join(cubemxdirMCU, "IP")
+version_file = os.path.join(cubemxdir, "db", "package.xml")
+cubemx_db_version = "Unknown"
+cubemx_db_release = "Unknown"
+xml_file = parse(version_file)
+Package_item = xml_file.getElementsByTagName("Package")
+for item in Package_item:
+    cubemx_db_version = item.attributes["DBVersion"].value
+PackDescription_item = xml_file.getElementsByTagName("PackDescription")
+for item in PackDescription_item:
+    cubemx_db_release = item.attributes["Release"].value
+print("CubeMX DB version {} release {}\n".format(cubemx_db_version, cubemx_db_release))
 
 if args.mcu:
     # check input file exists
-    if not (os.path.isfile(os.path.join(cubemxdir, args.mcu))):
+    if not (os.path.isfile(os.path.join(cubemxdirMCU, args.mcu))):
         print("\n" + args.mcu + " file not found")
-        print("\nCheck in " + cubemxdir + " the correct name of this file")
+        print("\nCheck in " + cubemxdirMCU + " the correct name of this file")
         print("\nYou may use double quotes for file containing special characters")
         quit()
     mcu_list.append(args.mcu)
 else:
-    mcu_list = fnmatch.filter(os.listdir(cubemxdir), "STM32*.xml")
+    mcu_list = fnmatch.filter(os.listdir(cubemxdirMCU), "STM32*.xml")
 
 if args.list:
-    print("Available xml files description: {}".format(mcu_list))
+    print("Available xml files description:")
     for f in mcu_list:
         print(f)
     quit()
@@ -1074,7 +1087,7 @@ for mcu_file in mcu_list:
             out_c_filename, out_h_filename, mcu_file
         )
     )
-    input_file_name = os.path.join(cubemxdir, mcu_file)
+    input_file_name = os.path.join(cubemxdirMCU, mcu_file)
     out_path = os.path.join(
         cur_dir,
         "Arduino",
