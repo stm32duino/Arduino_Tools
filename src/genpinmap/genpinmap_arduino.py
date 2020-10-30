@@ -323,51 +323,57 @@ def print_header():
 
 
 def print_all_lists():
-    if print_list_header("ADC", "ADC", "ADC", adclist):
+    if print_list_header("ADC", "ADC", ["ADC"], adclist):
         print_adc()
-    if print_list_header("DAC", "DAC", "DAC", daclist):
+    if print_list_header("DAC", "DAC", ["DAC"], daclist):
         print_dac()
-    if print_list_header("I2C", "I2C_SDA", "I2C", i2csda_list, i2cscl_list):
+    if print_list_header("I2C", "I2C_SDA", ["I2C"], i2csda_list, i2cscl_list):
         print_i2c(i2csda_list)
-        if print_list_header("", "I2C_SCL", "I2C", i2cscl_list):
+        if print_list_header("", "I2C_SCL", ["I2C"], i2cscl_list):
             print_i2c(i2cscl_list)
-    if print_list_header("PWM", "PWM", "TIM", pwm_list):
+    if print_list_header("PWM", "PWM", ["TIM"], pwm_list):
         print_pwm()
     if print_list_header(
         "SERIAL",
         "UART_TX",
-        "UART",
+        ["UART"],
         uarttx_list,
         uartrx_list,
         uartrts_list,
         uartcts_list,
     ):
         print_uart(uarttx_list)
-        if print_list_header("", "UART_RX", "UART", uartrx_list):
+        if print_list_header("", "UART_RX", ["UART"], uartrx_list):
             print_uart(uartrx_list)
-        if print_list_header("", "UART_RTS", "UART", uartrts_list):
+        if print_list_header("", "UART_RTS", ["UART"], uartrts_list):
             print_uart(uartrts_list)
-        if print_list_header("", "UART_CTS", "UART", uartcts_list):
+        if print_list_header("", "UART_CTS", ["UART"], uartcts_list):
             print_uart(uartcts_list)
     if print_list_header(
-        "SPI", "SPI_MOSI", "SPI", spimosi_list, spimiso_list, spisclk_list, spissel_list
+        "SPI",
+        "SPI_MOSI",
+        ["SPI"],
+        spimosi_list,
+        spimiso_list,
+        spisclk_list,
+        spissel_list,
     ):
         print_spi(spimosi_list)
-        if print_list_header("", "SPI_MISO", "SPI", spimiso_list):
+        if print_list_header("", "SPI_MISO", ["SPI"], spimiso_list):
             print_spi(spimiso_list)
-        if print_list_header("", "SPI_SCLK", "SPI", spisclk_list):
+        if print_list_header("", "SPI_SCLK", ["SPI"], spisclk_list):
             print_spi(spisclk_list)
-        if print_list_header("", "SPI_SSEL", "SPI", spissel_list):
+        if print_list_header("", "SPI_SSEL", ["SPI"], spissel_list):
             print_spi(spissel_list)
     if len(canrd_list) and "FDCAN" in canrd_list[0][2]:
         canname = "FDCAN"
     else:
         canname = "CAN"
-    if print_list_header(canname, "CAN_RD", canname, canrd_list, cantd_list):
+    if print_list_header(canname, "CAN_RD", [canname], canrd_list, cantd_list):
         print_can(canrd_list)
-        if print_list_header("", "CAN_TD", canname, cantd_list):
+        if print_list_header("", "CAN_TD", [canname], cantd_list):
             print_can(cantd_list)
-    if print_list_header("ETHERNET", "Ethernet", "ETH", eth_list):
+    if print_list_header("ETHERNET", "Ethernet", ["ETH"], eth_list):
         print_eth()
     inst = "QUADSPI"
     mod = "QSPI"
@@ -377,7 +383,7 @@ def print_all_lists():
     if print_list_header(
         inst,
         inst + "_DATA0",
-        mod,
+        [mod],
         quadspidata0_list,
         quadspidata1_list,
         quadspidata2_list,
@@ -386,23 +392,25 @@ def print_all_lists():
         quadspissel_list,
     ):
         print_qspi(quadspidata0_list)
-        if print_list_header("", inst + "_DATA1", mod, quadspidata1_list):
+        if print_list_header("", inst + "_DATA1", [mod], quadspidata1_list):
             print_qspi(quadspidata1_list)
-        if print_list_header("", inst + "_DATA2", mod, quadspidata2_list):
+        if print_list_header("", inst + "_DATA2", [mod], quadspidata2_list):
             print_qspi(quadspidata2_list)
-        if print_list_header("", inst + "_DATA3", mod, quadspidata3_list):
+        if print_list_header("", inst + "_DATA3", [mod], quadspidata3_list):
             print_qspi(quadspidata3_list)
-        if print_list_header("", inst + "_SCLK", mod, quadspisclk_list):
+        if print_list_header("", inst + "_SCLK", [mod], quadspisclk_list):
             print_qspi(quadspisclk_list)
-        if print_list_header("", inst + "_SSEL", mod, quadspissel_list):
+        if print_list_header("", inst + "_SSEL", [mod], quadspissel_list):
             print_qspi(quadspissel_list)
-    if print_list_header("USB", "USB", "PCD", usb_list, usb_otgfs_list, usb_otghs_list):
+    if print_list_header(
+        "USB", "USB", ["PCD", "HCD"], usb_list, usb_otgfs_list, usb_otghs_list
+    ):
         print_usb(usb_list)
-        if print_list_header("", "USB_OTG_FS", "PCD", usb_otgfs_list):
+        if print_list_header("", "USB_OTG_FS", ["PCD", "HCD"], usb_otgfs_list):
             print_usb(usb_otgfs_list)
-        if print_list_header("", "USB_OTG_HS", "PCD", usb_otghs_list):
+        if print_list_header("", "USB_OTG_HS", ["PCD", "HCD"], usb_otghs_list):
             print_usb(usb_otghs_list)
-    if print_list_header("SD", "SD", "SD", sd_list):
+    if print_list_header("SD", "SD", ["SD"], sd_list):
         print_sd()
     # Print specific PinNames in header file
     print_dualpad_h()
@@ -411,7 +419,7 @@ def print_all_lists():
     print_usb_h()
 
 
-def print_list_header(feature, lname, switch, *argslst):
+def print_list_header(feature, lname, lswitch, *argslst):
     lenlst = 0
     for lst in argslst:
         lenlst += len(lst)
@@ -427,11 +435,23 @@ def print_list_header(feature, lname, switch, *argslst):
             s = ""
         # Only for the first list
         if argslst[0]:
+            if len(lswitch) == 1:
+                s += """
+#ifdef HAL_{}_MODULE_ENABLED""".format(
+                    lswitch[0]
+                )
+            else:
+                s += """
+#if defined(HAL_{}_MODULE_ENABLED)""".format(
+                    lswitch[0]
+                )
+                for mod in lswitch[1:]:
+                    s += " || defined(HAL_{}_MODULE_ENABLED)".format(mod)
+
             s += """
-#ifdef HAL_{}_MODULE_ENABLED
 WEAK const PinMap PinMap_{}[] = {{
 """.format(
-                switch, lname
+                lname
             )
     else:
         # No data for the feature or the list
