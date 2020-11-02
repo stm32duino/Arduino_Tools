@@ -1,16 +1,14 @@
 import argparse
 import datetime
-import fnmatch
 import json
-import os
 import re
 import string
 import sys
 import textwrap
+from pathlib import Path
 from xml.dom.minidom import parse, Node
 from argparse import RawTextHelpFormatter
 
-mcu_file = ""
 mcu_list = []  # 'name'
 io_list = []  # 'PIN','name'
 alt_list = []  # 'PIN','name'
@@ -63,7 +61,7 @@ def find_gpio_file():
 
 
 def get_gpio_af_num(pintofind, iptofind):
-    if "STM32F10" in mcu_file:
+    if "STM32F10" in mcu_file.stem:
         return get_gpio_af_numF1(pintofind, iptofind)
     # DBG print ('pin to find ' + pintofind)
     i = 0
@@ -314,7 +312,7 @@ def print_header():
  */
 """.format(
         datetime.datetime.now().year,
-        os.path.basename(input_file_name),
+        mcu_file.name,
         cubemx_db_version,
         cubemx_db_release,
         re.sub("\\.c$", "", out_c_filename),
@@ -484,7 +482,7 @@ def print_adc():
     s_pin_data = "STM_PIN_DATA_EXT(STM_MODE_ANALOG"
     # For STM32L47xxx/48xxx, it is necessary to configure
     # the GPIOx_ASCR register
-    if re.match("STM32L4[78]+", mcu_file):
+    if re.match("STM32L4[78]+", mcu_file.stem):
         s_pin_data += "_ADC_CONTROL"
     s_pin_data += ", GPIO_NOPULL, 0, "
 
@@ -590,7 +588,7 @@ def print_uart(lst):
         # 2nd element is the UART_XX signal
         b = p[2].split("_")[0]
         s1 += "{:9}".format((b[: len(b) - 1] + b[len(b) - 1 :] + ","))
-        if "STM32F10" in mcu_file and lst == uartrx_list:
+        if "STM32F10" in mcu_file.stem and lst == uartrx_list:
             s1 += "STM_PIN_DATA(STM_MODE_INPUT, GPIO_PULLUP, "
         else:
             s1 += "STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, "
@@ -629,7 +627,7 @@ def print_can(lst):
         instance_number = instance_name.replace("FD", "").replace("CAN", "")
         if len(instance_number) == 0:
             instance_name += "1"
-        if "STM32F10" in mcu_file and lst == canrd_list:
+        if "STM32F10" in mcu_file.stem and lst == canrd_list:
             s1 += instance_name + ", STM_PIN_DATA(STM_MODE_INPUT, GPIO_NOPULL, "
         else:
             s1 += instance_name + ", STM_PIN_DATA(STM_MODE_AF_PP, GPIO_NOPULL, "
@@ -987,7 +985,7 @@ def parse_pins():
 
 
 # main
-cur_dir = os.getcwd()
+cur_dir = Path.cwd()
 out_c_filename = "PeripheralPins.c"
 out_h_filename = "PinNamesVar.h"
 config_filename = "config.json"
@@ -999,25 +997,25 @@ except IOError:
     config_file = open(config_filename, "w", newline="\n")
     if sys.platform.startswith("win32"):
         print("Platform is Windows")
-        cubemxdir = "C:\\Program Files\\STMicroelectronics\\STM32Cube\\STM32CubeMX"
+        cubemxdir = Path(r"C:\Program Files\STMicroelectronics\STM32Cube\STM32CubeMX")
     elif sys.platform.startswith("linux"):
         print("Platform is Linux")
-        cubemxdir = os.getenv("HOME") + "/STM32CubeMX"
+        cubemxdir = Path.home() / "STM32CubeMX"
     elif sys.platform.startswith("darwin"):
         print("Platform is Mac OSX")
-        cubemxdir = (
+        cubemxdir = Path(
             "/Applications/STMicroelectronics/STM32CubeMX.app/Contents/Resources"
         )
     else:
         print("Platform unknown")
         cubemxdir = "<Set CubeMX install directory>"
-    config_file.write(json.dumps({"CUBEMX_DIRECTORY": cubemxdir}))
+    config_file.write(json.dumps({"CUBEMX_DIRECTORY": str(cubemxdir)}))
     config_file.close()
     exit(1)
 
 config = json.load(config_file)
 config_file.close()
-cubemxdir = config["CUBEMX_DIRECTORY"]
+cubemxdir = Path(config["CUBEMX_DIRECTORY"])
 
 # by default, generate for all mcu xml files description
 parser = argparse.ArgumentParser(
@@ -1061,7 +1059,7 @@ its name, you should call it with double quotes""".format(
 )
 args = parser.parse_args()
 
-if not (os.path.isdir(cubemxdir)):
+if not (cubemxdir.is_dir()):
     print("\nCube Mx seems not to be installed or not at the requested location.")
     print(
         "\nPlease check the value you set for 'CUBEMX_DIRECTORY' in '{}' file.".format(
@@ -1070,12 +1068,12 @@ if not (os.path.isdir(cubemxdir)):
     )
     quit()
 
-cubemxdirMCU = os.path.join(cubemxdir, "db", "mcu")
-cubemxdirIP = os.path.join(cubemxdirMCU, "IP")
-version_file = os.path.join(cubemxdir, "db", "package.xml")
+cubemxdirMCU = cubemxdir / "db" / "mcu"
+cubemxdirIP = cubemxdirMCU / "IP"
+version_file = cubemxdir / "db" / "package.xml"
 cubemx_db_version = "Unknown"
 cubemx_db_release = "Unknown"
-xml_file = parse(version_file)
+xml_file = parse(str(version_file))
 Package_item = xml_file.getElementsByTagName("Package")
 for item in Package_item:
     cubemx_db_version = item.attributes["DBVersion"].value
@@ -1086,54 +1084,45 @@ print("CubeMX DB version {} release {}\n".format(cubemx_db_version, cubemx_db_re
 
 if args.mcu:
     # check input file exists
-    if not (os.path.isfile(os.path.join(cubemxdirMCU, args.mcu))):
+    if not ((cubemxdirMCU / args.mcu).is_file()):
         print("\n" + args.mcu + " file not found")
         print("\nCheck in " + cubemxdirMCU + " the correct name of this file")
         print("\nYou may use double quotes for file containing special characters")
         quit()
-    mcu_list.append(args.mcu)
+    mcu_list.append(cubemxdirMCU / args.mcu)
 else:
-    mcu_list = fnmatch.filter(os.listdir(cubemxdirMCU), "STM32*.xml")
+    mcu_list = cubemxdirMCU.glob("STM32*.xml")
 
 if args.list:
     print("Available xml files description:")
     for f in mcu_list:
-        print(f)
+        print(f.name)
     quit()
 
 for mcu_file in mcu_list:
     print(
         "Generating {} and {} for '{}'...".format(
-            out_c_filename, out_h_filename, mcu_file
+            out_c_filename, out_h_filename, mcu_file.name
         )
     )
-    input_file_name = os.path.join(cubemxdirMCU, mcu_file)
-    out_path = os.path.join(
-        cur_dir,
-        "Arduino",
-        os.path.splitext(mcu_file)[0][:7],
-        os.path.splitext(mcu_file)[0],
-    )
-    output_c_filename = os.path.join(out_path, out_c_filename)
-    output_h_filename = os.path.join(out_path, out_h_filename)
-    if not (os.path.isdir(out_path)):
-        os.makedirs(out_path)
+    out_path = cur_dir / "Arduino" / mcu_file.name[:7] / mcu_file.stem
+    output_c_filename = out_path / out_c_filename
+    output_h_filename = out_path / out_h_filename
+    out_path.mkdir(parents=True, exist_ok=True)
 
     # open output file
-    if os.path.isfile(output_c_filename):
-        os.remove(output_c_filename)
+    output_c_filename.unlink(missing_ok=True)
     out_c_file = open(output_c_filename, "w", newline="\n")
-    if os.path.isfile(output_h_filename):
-        os.remove(output_h_filename)
+    output_h_filename.unlink(missing_ok=True)
     out_h_file = open(output_h_filename, "w", newline="\n")
 
     # open input file
-    xml_mcu = parse(input_file_name)
+    xml_mcu = parse(str(mcu_file))
     gpiofile = find_gpio_file()
     if gpiofile == "ERROR":
         print("Could not find GPIO file")
         quit()
-    xml_gpio = parse(os.path.join(cubemxdirIP, "GPIO-" + gpiofile + "_Modes.xml"))
+    xml_gpio = parse(str(cubemxdirIP / ("GPIO-" + gpiofile + "_Modes.xml")))
 
     parse_pins()
     sort_my_lists()
