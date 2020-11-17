@@ -69,41 +69,42 @@ def get_gpio_af_num(pintofind, iptofind):
     for n in xml_gpio.documentElement.childNodes:
         i += 1
         j = 0
-        if n.nodeType == Node.ELEMENT_NODE:
-            for firstlevel in n.attributes.items():
-                # if 'PB7' in firstlevel:
-                if pintofind == firstlevel[1]:
-                    # DBG print (i , firstlevel)
-                    # n = pin node found
-                    for m in n.childNodes:
-                        j += 1
-                        k = 0
-                        if m.nodeType == Node.ELEMENT_NODE:
-                            for secondlevel in m.attributes.items():
-                                k += 1
-                                # if 'I2C1_SDA' in secondlevel:
-                                if iptofind in secondlevel:
-                                    # DBG print (i, j,  m.attributes.items())
-                                    # m = IP node found
-                                    for p in m.childNodes:
-                                        if p.nodeType == Node.ELEMENT_NODE:
-                                            # p node of 'Specific parameter'
-                                            # DBG print (i,j,k,p.attributes.items())
-                                            for myc in p.childNodes:
-                                                # DBG print (myc)
-                                                if myc.nodeType == Node.ELEMENT_NODE:
-                                                    # myc = node of ALTERNATE
-                                                    for mygpioaflist in myc.childNodes:
-                                                        if (
-                                                            mygpioaflist.data
-                                                            not in mygpioaf
-                                                        ):
-                                                            if mygpioaf != "":
-                                                                mygpioaf += " "
-                                                            mygpioaf += (
-                                                                mygpioaflist.data
-                                                            )
-                                                        # print (mygpioaf)
+        if n.nodeType != Node.ELEMENT_NODE:
+            continue
+        for firstlevel in n.attributes.items():
+            # if 'PB7' in firstlevel:
+            if pintofind != firstlevel[1]:
+                continue
+            # DBG print (i , firstlevel)
+            # n = pin node found
+            for m in n.childNodes:
+                j += 1
+                k = 0
+                if m.nodeType != Node.ELEMENT_NODE:
+                    continue
+                for secondlevel in m.attributes.items():
+                    k += 1
+                    # if 'I2C1_SDA' in secondlevel:
+                    if iptofind not in secondlevel:
+                        continue
+                    # DBG print (i, j,  m.attributes.items())
+                    # m = IP node found
+                    for p in m.childNodes:
+                        if p.nodeType != Node.ELEMENT_NODE:
+                            continue
+                        # p node of 'Specific parameter'
+                        # DBG print (i,j,k,p.attributes.items())
+                        for myc in p.childNodes:
+                            # DBG print (myc)
+                            if myc.nodeType != Node.ELEMENT_NODE:
+                                continue
+                            # myc = node of ALTERNATE
+                            for mygpioaflist in myc.childNodes:
+                                if mygpioaflist.data not in mygpioaf:
+                                    if mygpioaf != "":
+                                        mygpioaf += " "
+                                    mygpioaf += mygpioaflist.data
+                                # print (mygpioaf)
     if mygpioaf == "":
         mygpioaf = "GPIO_AF_NONE"
     return mygpioaf
@@ -116,56 +117,55 @@ def get_gpio_af_numF1(pintofind, iptofind):
     for n in xml_gpio.documentElement.childNodes:
         i += 1
         j = 0
-        if n.nodeType == Node.ELEMENT_NODE:
-            for firstlevel in n.attributes.items():
-                # print ('firstlevel ' , firstlevel)
-                #                if 'PB7' in firstlevel:
-                if pintofind == firstlevel[1]:
-                    # print ('firstlevel ' , i , firstlevel)
-                    # n = pin node found
-                    for m in n.childNodes:
-                        j += 1
-                        k = 0
-                        if m.nodeType == Node.ELEMENT_NODE:
-                            for secondlevel in m.attributes.items():
-                                # print ('secondlevel ' , i, j, k , secondlevel)
-                                k += 1
-                                # if 'I2C1_SDA' in secondlevel:
-                                if iptofind in secondlevel:
-                                    # m = IP node found
-                                    # print (i, j,  m.attributes.items())
-                                    for p in m.childNodes:
-                                        # p node 'RemapBlock'
-                                        if (
-                                            p.nodeType == Node.ELEMENT_NODE
-                                            and p.hasChildNodes() is False
-                                        ):
-                                            if mygpioaf != "":
-                                                mygpioaf += " "
-                                            mygpioaf += "AFIO_NONE"
-                                        else:
-                                            for s in p.childNodes:
-                                                if s.nodeType == Node.ELEMENT_NODE:
-                                                    # s node 'Specific parameter'
-                                                    # print (i,j,k,p.attributes.items())
-                                                    for myc in s.childNodes:
-                                                        # DBG print (myc)
-                                                        if (
-                                                            myc.nodeType
-                                                            == Node.ELEMENT_NODE
-                                                        ):
-                                                            # myc = AF value
-                                                            for (
-                                                                mygpioaflist
-                                                            ) in myc.childNodes:
-                                                                if mygpioaf != "":
-                                                                    mygpioaf += " "
-                                                                mygpioaf += mygpioaflist.data.replace(
-                                                                    "__HAL_", ""
-                                                                ).replace(
-                                                                    "_REMAP", ""
-                                                                )
-                                                                # print mygpioaf
+        if n.nodeType != Node.ELEMENT_NODE:
+            continue
+        for firstlevel in n.attributes.items():
+            # print ('firstlevel ' , firstlevel)
+            #                if 'PB7' in firstlevel:
+            if pintofind != firstlevel[1]:
+                continue
+            # print ('firstlevel ' , i , firstlevel)
+            # n = pin node found
+            for m in n.childNodes:
+                j += 1
+                k = 0
+                if m.nodeType != Node.ELEMENT_NODE:
+                    continue
+                for secondlevel in m.attributes.items():
+                    # print ('secondlevel ' , i, j, k , secondlevel)
+                    k += 1
+                    # if 'I2C1_SDA' in secondlevel:
+                    if iptofind not in secondlevel:
+                        continue
+                    # m = IP node found
+                    # print (i, j,  m.attributes.items())
+                    for p in m.childNodes:
+                        # p node 'RemapBlock'
+                        if (
+                            p.nodeType == Node.ELEMENT_NODE
+                            and p.hasChildNodes() is False
+                        ):
+                            if mygpioaf != "":
+                                mygpioaf += " "
+                            mygpioaf += "AFIO_NONE"
+                        else:
+                            for s in p.childNodes:
+                                if s.nodeType != Node.ELEMENT_NODE:
+                                    continue
+                                # s node 'Specific parameter'
+                                # print (i,j,k,p.attributes.items())
+                                for myc in s.childNodes:
+                                    # DBG print (myc)
+                                    if myc.nodeType != Node.ELEMENT_NODE:
+                                        continue
+                                    # myc = AF value
+                                    for mygpioaflist in myc.childNodes:
+                                        if mygpioaf != "":
+                                            mygpioaf += " "
+                                        mygpioaf += mygpioaflist.data.replace(
+                                            "__HAL_", ""
+                                        ).replace("_REMAP", "")
+                                        # print mygpioaf
     if mygpioaf == "":
         mygpioaf = "AFIO_NONE"
     return mygpioaf
