@@ -66,7 +66,7 @@ license_header = """/*
     datetime.datetime.now().year
 )
 
-
+# GPIO file parsing
 def find_gpio_file():
     res = "ERROR"
     itemlist = xml_mcu.getElementsByTagName("IP")
@@ -495,7 +495,6 @@ def print_adc():
         s_pin_data += "_ADC_CONTROL"
     s_pin_data += ", GPIO_NOPULL, 0, "
 
-    manage_alternate(adclist)
     wpin = width_format(adclist)
 
     for p in adclist:
@@ -542,7 +541,6 @@ def print_dac():
 
 
 def print_i2c(lst):
-    manage_alternate(lst)
     wpin = width_format(lst)
     for p in lst:
         result = get_gpio_af_num(p[1], p[2])
@@ -562,7 +560,6 @@ def print_i2c(lst):
 
 
 def print_pwm():
-    manage_alternate(pwm_list)
     wpin = width_format(pwm_list)
 
     for p in pwm_list:
@@ -589,7 +586,6 @@ def print_pwm():
 
 
 def print_uart(lst):
-    manage_alternate(lst)
     wpin = width_format(lst)
     for p in lst:
         result = get_gpio_af_num(p[1], p[2])
@@ -609,7 +605,6 @@ def print_uart(lst):
 
 
 def print_spi(lst):
-    manage_alternate(lst)
     wpin = width_format(lst)
     for p in lst:
         result = get_gpio_af_num(p[1], p[2])
@@ -848,11 +843,10 @@ def print_usb_h():
         pinvar_h_file.write("#endif\n")
 
 
+# Variant files generation
 def spi_pins_variant():
     ss_pin = ss1_pin = ss2_pin = ss3_pin = mosi_pin = miso_pin = sck_pin = "PYn"
 
-    # mosi_pin = spimosi_list[0][0].replace("_", "")
-    # mosi_inst = spimosi_list[0][2].split("_", 1)[0]
     # Iterate to find match instance if any
     for mosi in spimosi_list:
         mosi_inst = mosi[2].split("_", 1)[0]
@@ -1133,20 +1127,7 @@ def print_variant():
     )
 
 
-def manage_alternate(lst):
-    prev_p = ""
-    alt_index = 0
-    for index, p in enumerate(lst):
-        if p[0] == prev_p:
-            p[0] += "_ALT%d" % alt_index
-            lst[index] = p
-            store_pin(p[0], p[1], alt_list)
-            alt_index += 1
-        else:
-            prev_p = p[0]
-            alt_index = 0
-
-
+# List management
 tokenize = re.compile(r"(\d+)|(\D+)").findall
 
 
@@ -1160,7 +1141,6 @@ def natural_sortkey2(list_2_elem):
 
 def sort_my_lists():
     io_list.sort(key=natural_sortkey)
-    alt_list.sort(key=natural_sortkey)
     dualpad_list.sort(key=natural_sortkey)
     remap_list.sort(key=natural_sortkey)
     adclist.sort(key=natural_sortkey)
@@ -1225,6 +1205,74 @@ def clean_all_lists():
     del usb_otgfs_list[:]
     del usb_otghs_list[:]
     del sd_list[:]
+
+
+def manage_alternate():
+    update_alternate(adclist)
+    update_alternate(daclist)
+    update_alternate(i2cscl_list)
+    update_alternate(i2csda_list)
+    update_alternate(pwm_list)
+    update_alternate(uarttx_list)
+    update_alternate(uartrx_list)
+    update_alternate(uartcts_list)
+    update_alternate(uartrts_list)
+    update_alternate(spimosi_list)
+    update_alternate(spimiso_list)
+    update_alternate(spissel_list)
+    update_alternate(spisclk_list)
+    update_alternate(cantd_list)
+    update_alternate(canrd_list)
+    update_alternate(eth_list)
+    update_alternate(quadspidata0_list)
+    update_alternate(quadspidata1_list)
+    update_alternate(quadspidata2_list)
+    update_alternate(quadspidata3_list)
+    update_alternate(quadspisclk_list)
+    update_alternate(quadspissel_list)
+    update_alternate(syswkup_list)
+    update_alternate(usb_list)
+    update_alternate(usb_otgfs_list)
+    update_alternate_usb_otg_hs()
+    update_alternate(sd_list)
+
+    alt_list.sort(key=natural_sortkey)
+
+
+
+def update_alternate(lst):
+    prev_p = ""
+    alt_index = 1
+    for index, p in enumerate(lst):
+        if p[0] == prev_p:
+            p[0] += "_ALT%d" % alt_index
+            lst[index] = p
+            store_pin(p[0], p[1], alt_list)
+            alt_index += 1
+        else:
+            prev_p = p[0]
+            alt_index = 1
+
+
+def update_alternate_usb_otg_hs():
+    prev_p = ""
+    alt_index = 1
+    for nb in range(2):
+        for index, p in enumerate(usb_otghs_list):
+            if nb == 0:
+                if "ULPI" in p[2]:
+                    continue
+            else:
+                if "ULPI" not in p[2]:
+                    continue
+            if p[0] == prev_p:
+                p[0] += "_ALT%d" % alt_index
+                usb_otghs_list[index] = p
+                store_pin(p[0], p[1], alt_list)
+                alt_index += 1
+            else:
+                prev_p = p[0]
+                alt_index = 1
 
 
 def parse_pins():
@@ -1445,6 +1493,7 @@ for mcu_file in mcu_list:
 
     parse_pins()
     sort_my_lists()
+    manage_alternate()
     print_periph_header()
     print_all_lists()
     print_variant()
