@@ -3,6 +3,7 @@ import datetime
 import json
 import re
 import string
+import subprocess
 import sys
 import textwrap
 from argparse import RawTextHelpFormatter
@@ -303,7 +304,7 @@ def print_periph_header():
     s = """{}
 /*
  * Automatically generated from {}
- * CubeMX DB version {} release {}
+ * CubeMX DB release {}
  */
 #include "Arduino.h"
 #include "{}.h"
@@ -322,8 +323,7 @@ def print_periph_header():
 """.format(
         license_header,
         mcu_file.name,
-        cubemx_db_version,
-        cubemx_db_release,
+        db_release,
         re.sub("\\.c$", "", periph_c_filename),
     )
     periph_c_file.write(s)
@@ -1332,59 +1332,160 @@ def parse_pins():
                     store_sd(pin, name, sig)
 
 
+# Config management
+def create_config():
+    # Create a Json file for a better path management
+    try:
+        print("Please set your configuration in '{}' file".format(config_filename))
+        config_file = open(config_filename, "w", newline="\n")
+        if sys.platform.startswith("win32"):
+            print("Platform is Windows")
+            cubemxdir = Path(
+                r"C:\Program Files\STMicroelectronics\STM32Cube\STM32CubeMX"
+            )
+        elif sys.platform.startswith("linux"):
+            print("Platform is Linux")
+            cubemxdir = Path.home() / "STM32CubeMX"
+        elif sys.platform.startswith("darwin"):
+            print("Platform is Mac OSX")
+            cubemxdir = Path(
+                "/Applications/STMicroelectronics/STM32CubeMX.app/Contents/Resources"
+            )
+        else:
+            print("Platform unknown")
+            cubemxdir = "<Set CubeMX install directory>"
+        config_file.write(
+            json.dumps(
+                {
+                    "CUBEMX_DIRECTORY": str(cubemxdir),
+                    "REPO_LOCAL_PATH": str(repo_local_path),
+                },
+                indent=2,
+            )
+        )
+        config_file.close()
+    except IOError:
+        print("Failed to open " + config_filename)
+    exit(1)
+
+
+def check_config():
+    global cubemxdir
+    global repo_local_path
+    global repo_path
+
+    if config_filename.is_file():
+        try:
+            config_file = open(config_filename, "r")
+            config = json.load(config_file)
+            config_file.close()
+
+            conf = config["REPO_LOCAL_PATH"]
+            if conf:
+                if conf != "":
+                    repo_local_path = Path(conf)
+                    repo_path = repo_local_path / repo_name
+            conf = config["CUBEMX_DIRECTORY"]
+            if conf:
+                cubemxdir = Path(conf)
+        except IOError:
+            print("Failed to open " + config_filename)
+    else:
+        create_config()
+
+
+def manage_repo():
+    global db_release
+    repo_local_path.mkdir(parents=True, exist_ok=True)
+
+    print("Updating " + repo_name + "...")
+    try:
+        if not args.skip:
+            if repo_path.is_dir():
+                # Get new tags from the remote
+                git_cmds = [
+                    ["git", "-C", repo_path, "clean", "-fdx"],
+                    ["git", "-C", repo_path, "fetch"],
+                    ["git", "-C", repo_path, "reset", "--hard", "origin/master"],
+                ]
+            else:
+                # Clone it as it does not exists yet
+                git_cmds = [["git", "-C", repo_local_path, "clone", gh_url]]
+
+            for cmd in git_cmds:
+                subprocess.check_output(cmd).decode("utf-8")
+        if repo_path.is_dir():
+            # Get tag
+            sha1_id = (
+                subprocess.check_output(
+                    ["git", "-C", repo_path, "rev-list", "--tags", "--max-count=1"]
+                )
+                .decode("utf-8")
+                .strip()
+            )
+            version_tag = (
+                subprocess.check_output(
+                    ["git", "-C", repo_path, "describe", "--tags", sha1_id]
+                )
+                .decode("utf-8")
+                .strip()
+            )
+            subprocess.check_output(
+                ["git", "-C", repo_path, "checkout", version_tag],
+                stderr=subprocess.DEVNULL,
+            )
+            db_release = version_tag
+            return True
+    except subprocess.CalledProcessError as e:
+        print("Command {} failed with error code {}".format(e.cmd, e.returncode))
+    return False
+
+
 # main
 cur_dir = Path.cwd()
 templates_dir = cur_dir / "templates"
 periph_c_filename = "PeripheralPins.c"
 pinvar_h_filename = "PinNamesVar.h"
-config_filename = "config.json"
+config_filename = Path("config.json")
 variant_h_filename = "variant.h"
 variant_cpp_filename = "variant.cpp"
+repo_local_path = cur_dir / "repo"
+gh_url = "https://github.com/STMicroelectronics/STM32_open_pin_data"
+repo_name = gh_url.rsplit("/", 1)[-1]
+repo_path = repo_local_path / repo_name
+db_release = "Unknown"
 
-try:
-    config_file = open(config_filename, "r")
-except IOError:
-    print("Please set your configuration in '{}' file".format(config_filename))
-    config_file = open(config_filename, "w", newline="\n")
-    if sys.platform.startswith("win32"):
-        print("Platform is Windows")
-        cubemxdir = Path(r"C:\Program Files\STMicroelectronics\STM32Cube\STM32CubeMX")
-    elif sys.platform.startswith("linux"):
-        print("Platform is Linux")
-        cubemxdir = Path.home() / "STM32CubeMX"
-    elif sys.platform.startswith("darwin"):
-        print("Platform is Mac OSX")
-        cubemxdir = Path(
-            "/Applications/STMicroelectronics/STM32CubeMX.app/Contents/Resources"
-        )
-    else:
-        print("Platform unknown")
-        cubemxdir = "<Set CubeMX install directory>"
-    config_file.write(json.dumps({"CUBEMX_DIRECTORY": str(cubemxdir)}))
-    config_file.close()
-    exit(1)
-
-config = json.load(config_file)
-config_file.close()
-cubemxdir = Path(config["CUBEMX_DIRECTORY"])
+check_config()
 
 # By default, generate for all mcu xml files description
 parser = argparse.ArgumentParser(
     description=textwrap.dedent(
         """\
-By default, generate {} and {} for all xml files description available in
-STM32CubeMX directory defined in '{}':
-\t{}""".format(
-            periph_c_filename, pinvar_h_filename, config_filename, cubemxdir
+By default, generate {}, {}, {} and {}
+for all xml files description available in STM32CubeMX internal database.
+Internal database path must be defined in {}.
+It can be the one from STM32CubeMX directory if defined:
+\t{}
+or the one from GitHub:
+\t{}
+
+""".format(
+            periph_c_filename,
+            pinvar_h_filename,
+            variant_cpp_filename,
+            variant_h_filename,
+            config_filename,
+            cubemxdir,
+            gh_url,
         )
     ),
     epilog=textwrap.dedent(
         """\
-After files generation, review them carefully and please report any issue to github:
+After files generation, review them carefully and please report any issue to GitHub:
 \thttps://github.com/stm32duino/Arduino_Tools/issues\n
-Once generated, you have to comment a line if the pin is generated several times
-for the same IP or if the pin should not be used (overlaid with some HW on the board,
-for instance)"""
+Once generated, you can comment a line if the pin should not be used
+(overlaid with some HW on the board, for instance) and update all undefined pins
+in variant."""
     ),
     formatter_class=RawTextHelpFormatter,
 )
@@ -1401,48 +1502,84 @@ group.add_argument(
     metavar="xml",
     help=textwrap.dedent(
         """\
-Generate {} and {} for specified mcu xml file description
-in STM32CubeMX. This xml file contains non alpha characters in
-its name, you should call it with double quotes""".format(
-            periph_c_filename, pinvar_h_filename
+Generate {}, {}, {} and {}
+for specified mcu xml file description in STM32CubeMX.
+This xml file can contain non alpha characters in its name,
+you should call it with double quotes""".format(
+            periph_c_filename,
+            pinvar_h_filename,
+            variant_cpp_filename,
+            variant_h_filename,
         )
     ),
 )
+
+parser.add_argument(
+    "-c",
+    "--cube",
+    help=textwrap.dedent(
+        """\
+Use STM32CubeMX internal database. Default use GitHub {} repository.
+""".format(
+            repo_name
+        )
+    ),
+    action="store_true",
+)
+parser.add_argument(
+    "-s",
+    "--skip",
+    help="Skip {} clone/fetch".format(repo_name),
+    action="store_true",
+)
 args = parser.parse_args()
 
-if not (cubemxdir.is_dir()):
-    print("\nCube Mx seems not to be installed or not at the requested location.")
-    print(
-        "\nPlease check the value you set for 'CUBEMX_DIRECTORY' in '{}' file.".format(
-            config_filename
-        )
-    )
-    quit()
+# Using GitHub repo is the preferred way, CubeMX used as a fallback
+fallback = False
+if not args.cube:
+    if manage_repo():
+        dirMCU = repo_path / "mcu"
+        dirIP = dirMCU / "IP"
+    else:
+        fallback = True
+if fallback or args.cube:
+    if not (cubemxdir.is_dir()):
+        print(
+            """
+Cube Mx seems not to be installed or not at the specified location.
 
-cubemxdirMCU = cubemxdir / "db" / "mcu"
-cubemxdirIP = cubemxdirMCU / "IP"
-version_file = cubemxdir / "db" / "package.xml"
-cubemx_db_version = "Unknown"
-cubemx_db_release = "Unknown"
-xml_file = parse(str(version_file))
-Package_item = xml_file.getElementsByTagName("Package")
-for item in Package_item:
-    cubemx_db_version = item.attributes["DBVersion"].value
-PackDescription_item = xml_file.getElementsByTagName("PackDescription")
-for item in PackDescription_item:
-    cubemx_db_release = item.attributes["Release"].value
-print("CubeMX DB version {} release {}\n".format(cubemx_db_version, cubemx_db_release))
+Please check the value set for 'CUBEMX_DIRECTORY' in '{}' file.""".format(
+                config_filename
+            )
+        )
+        quit()
+
+    dirMCU = cubemxdir / "db" / "mcu"
+    dirIP = dirMCU / "IP"
+    version_file = cubemxdir / "db" / "package.xml"
+    if version_file.is_file():
+        xml_file = parse(str(version_file))
+        PackDescription_item = xml_file.getElementsByTagName("PackDescription")
+        for item in PackDescription_item:
+            db_release = item.attributes["Release"].value
+
+# Process DB release
+release_regex = r".*(\d+.\d+.\d+)$"
+release_match = re.match(release_regex, db_release)
+if release_match:
+    db_release = release_match.group(1)
+print("CubeMX DB release {}\n".format(db_release))
 
 if args.mcu:
-    # check input file exists
-    if not ((cubemxdirMCU / args.mcu).is_file()):
+    # Check input file exists
+    if not ((dirMCU / args.mcu).is_file()):
         print("\n" + args.mcu + " file not found")
-        print("\nCheck in " + cubemxdirMCU + " the correct name of this file")
+        print("\nCheck in " + dirMCU + " the correct name of this file")
         print("\nYou may use double quotes for file containing special characters")
         quit()
-    mcu_list.append(cubemxdirMCU / args.mcu)
+    mcu_list.append(dirMCU / args.mcu)
 else:
-    mcu_list = cubemxdirMCU.glob("STM32*.xml")
+    mcu_list = dirMCU.glob("STM32*.xml")
 
 if args.list:
     print("Available xml files description:")
@@ -1457,15 +1594,7 @@ j2_env = Environment(
 )
 
 for mcu_file in mcu_list:
-    print(
-        "Generating {}, {}, {} and {} for '{}'...".format(
-            periph_c_filename,
-            pinvar_h_filename,
-            variant_cpp_filename,
-            variant_h_filename,
-            mcu_file.name,
-        )
-    )
+    print("Generating files for '{}'...".format(mcu_file.name))
     out_path = cur_dir / "Arduino" / mcu_file.name[:7] / mcu_file.stem
     periph_c_filepath = out_path / periph_c_filename
     periph_h_filepath = out_path / pinvar_h_filename
@@ -1489,7 +1618,7 @@ for mcu_file in mcu_list:
     if gpiofile == "ERROR":
         print("Could not find GPIO file")
         quit()
-    xml_gpio = parse(str(cubemxdirIP / ("GPIO-" + gpiofile + "_Modes.xml")))
+    xml_gpio = parse(str(dirIP / ("GPIO-" + gpiofile + "_Modes.xml")))
 
     parse_pins()
     sort_my_lists()
