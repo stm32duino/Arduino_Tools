@@ -1653,7 +1653,11 @@ j2_env = Environment(
 
 for mcu_file in mcu_list:
     print("Generating files for '{}'...".format(mcu_file.name))
-    out_path = cur_dir / "Arduino" / mcu_file.name[:7] / mcu_file.stem
+    if "MP1" in mcu_file.name:
+        mcu_dir = "STM32MP1xx"
+    else:
+        mcu_dir = mcu_file.name[:7] + "xx"
+    out_path = cur_dir / "Arduino" / mcu_dir / mcu_file.stem
     periph_c_filepath = out_path / periph_c_filename
     pinvar_h_filepath = out_path / pinvar_h_filename
     variant_cpp_filepath = out_path / variant_cpp_filename
