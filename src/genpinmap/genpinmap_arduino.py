@@ -43,6 +43,11 @@ usb_otgfs_list = []  # 'PIN','name','USB'
 usb_otghs_list = []  # 'PIN','name','USB'
 sd_list = []  # 'PIN','name','SD'
 
+# IP information
+gpiofile = ""
+tim_inst_list = []  # TIMx instance
+usb_inst = {"usb": "", "otg_fs": "", "otg_hs": ""}
+
 # format
 # Peripheral
 start_elem_fmt = "  {{{:{width}}"
@@ -52,15 +57,36 @@ end_array_fmt = """  {{NC,{0:{w1}}NP,{0:{w2}}0}}
 """
 
 
-# GPIO file parsing
-def find_gpio_file():
-    res = "ERROR"
+# mcu file parsing
+def parse_IP_file():
+    global gpiofile
+    tim_regex = r"^(TIM\d+)$"
+    usb_regex = r"^(USB(?!PD|_HOST|_DEVICE).*)$"
+    gpiofile = ""
+    del tim_inst_list[:]
+    usb_inst["usb"] = ""
+    usb_inst["otg_fs"] = ""
+    usb_inst["otg_hs"] = ""
+
     itemlist = xml_mcu.getElementsByTagName("IP")
     for s in itemlist:
-        if "GPIO" in s.attributes["Name"].value:
-            res = s.attributes["Version"].value
-            break
-    return res
+        inst = re.match(tim_regex, s.attributes["InstanceName"].value)
+        if inst:
+            # Collect all TIMx instance
+            tim_inst_list.append(inst.group(1))
+        else:
+            inst = re.match(usb_regex, s.attributes["InstanceName"].value)
+            if inst:
+                if "OTG" in inst.group(1):
+                    if "FS" in inst.group(1):
+                        usb_inst["otg_fs"] = inst.group(1)
+                    else:
+                        usb_inst["otg_hs"] = inst.group(1)
+                else:
+                    usb_inst["usb"] = inst.group(1)
+            else:
+                if gpiofile == "" and "GPIO" in s.attributes["Name"].value:
+                    gpiofile = s.attributes["Version"].value
 
 
 def get_gpio_af_num(pintofind, iptofind):
@@ -675,12 +701,12 @@ def usb_pinmap(lst):
     nb_loop = 1
 
     if lst == usb_otgfs_list:
-        inst = "USB_OTG_FS"
+        inst = usb_inst["otg_fs"]
     elif lst == usb_otghs_list:
-        inst = "USB_OTG_HS"
+        inst = usb_inst["otg_hs"]
         nb_loop = 2
     else:
-        inst = "USB"
+        inst = usb_inst["usb"]
     for nb in range(nb_loop):
         for p in lst:
             hsinfs = 0
@@ -1048,15 +1074,8 @@ def timer_variant():
         "TIM8",
         "TIM20",
     ]
-    tim_inst_list = []
-    tim_regex = r"^(TIM\d+)$"
+
     tone = servo = "TIMx"
-    itemlist = xml_mcu.getElementsByTagName("IP")
-    # Collect all TIMx instance
-    for s in itemlist:
-        inst = re.match(tim_regex, s.attributes["InstanceName"].value)
-        if inst:
-            tim_inst_list.append(inst.group(1))
     if tim_inst_list:
         for pref in tim_inst_order:
             if pref in tim_inst_list:
@@ -1676,8 +1695,8 @@ for mcu_file in mcu_list:
 
     # open input file
     xml_mcu = parse(str(mcu_file))
-    gpiofile = find_gpio_file()
-    if gpiofile == "ERROR":
+    parse_IP_file()
+    if not gpiofile:
         print("Could not find GPIO file")
         quit()
     xml_gpio = parse(str(dirIP / ("GPIO-" + gpiofile + "_Modes.xml")))
