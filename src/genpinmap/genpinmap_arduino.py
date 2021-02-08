@@ -319,9 +319,9 @@ def adc_pinmap():
     # For STM32L47xxx/48xxx, it is necessary to configure
     # the GPIOx_ASCR register
     if re.match("STM32L4[78]+", mcu_file.stem):
-        mode = "STM_MODE_ANALOG_ADC_CONTROL"
+        default_mode = "STM_MODE_ANALOG_ADC_CONTROL"
     else:
-        mode = "STM_MODE_ANALOG"
+        default_mode = "STM_MODE_ANALOG"
     for p in adclist:
         # inst
         a = p[2].split("_")
@@ -331,7 +331,11 @@ def adc_pinmap():
         winst.append(len(inst))
         wpin.append(len(p[0]))
         # chan
-        chan = re.sub("IN[N|P]?", "", a[1])
+        chan = re.sub("^IN[N|P]?|\D*$", "", a[1])
+        if a[1].endswith('b'):
+            mode = "STM_MODE_ANALOG_ADC_CHANNEL_BANK_B"
+        else:
+            mode = default_mode
         adc_pins_list.append(
             {
                 "pin": p[0],
