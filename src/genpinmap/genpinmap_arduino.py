@@ -212,7 +212,9 @@ def store_pin(pin, name, dest_list):
 
 # Store ADC list
 def store_adc(pin, name, signal):
-    if "IN" in signal:
+    # Skip Negative input analog channels (INN)
+    # Differential is currently not managed
+    if "IN" in signal and "INN" not in signal:
         adclist.append([pin, name, signal])
 
 
@@ -330,9 +332,15 @@ def adc_pinmap():
             inst += "1"  # single ADC for this product
         winst.append(len(inst))
         wpin.append(len(p[0]))
+        if "INN" in a[1]:
+            # Negative input analog channels
+            inv = "1"
+        else:
+            # Positive input analog channels
+            inv = "0"
         # chan
-        chan = re.sub("^IN[N|P]?|\D*$", "", a[1])
-        if a[1].endswith('b'):
+        chan = re.sub(r"^IN[N|P]?|\D*$", "", a[1])
+        if a[1].endswith("b"):
             mode = "STM_MODE_ANALOG_ADC_CHANNEL_BANK_B"
         else:
             mode = default_mode
@@ -344,7 +352,7 @@ def adc_pinmap():
                 "pull": "GPIO_NOPULL",
                 "af": "0",
                 "chan": chan,
-                "inv": "0",
+                "inv": inv,
                 "cmt": p[2],
             }
         )
