@@ -42,12 +42,12 @@ extern "C" {
 
 // On-board LED pin number
 #ifndef LED_BUILTIN
-#define LED_BUILTIN             PYn
+#define LED_BUILTIN             NC
 #endif
 
 // On-board user button
 #ifndef USER_BTN
-#define USER_BTN                PYn
+#define USER_BTN                NC
 #endif
 
 // SPI definitions
@@ -135,8 +135,12 @@ extern "C" {
   //
   // SERIAL_PORT_HARDWARE_OPEN  Hardware serial ports which are open for use.  Their RX & TX
   //                            pins are NOT connected to anything by default.
-  #define SERIAL_PORT_MONITOR   Serial
-  #define SERIAL_PORT_HARDWARE  Serial
+  #ifndef SERIAL_PORT_MONITOR
+    #define SERIAL_PORT_MONITOR   Serial
+  #endif
+  #ifndef SERIAL_PORT_HARDWARE
+    #define SERIAL_PORT_HARDWARE  Serial
+  #endif
 #endif
 
 #endif /* _VARIANT_ARDUINO_STM32_ */

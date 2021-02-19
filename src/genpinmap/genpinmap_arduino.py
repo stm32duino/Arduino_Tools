@@ -943,7 +943,7 @@ def print_pinamevar():
 
 # Variant files generation
 def spi_pins_variant():
-    ss_pin = ss1_pin = ss2_pin = ss3_pin = mosi_pin = miso_pin = sck_pin = "PYn"
+    ss_pin = ss1_pin = ss2_pin = ss3_pin = mosi_pin = miso_pin = sck_pin = "NC"
 
     # Iterate to find match instance if any
     for mosi in spimosi_list:
@@ -968,13 +968,13 @@ def spi_pins_variant():
         for ss in spissel_list:
             ss_inst = ss[2].split("_", 1)[0]
             if mosi_inst == ss_inst:
-                if "PYn" == ss_pin:
+                if "NC" == ss_pin:
                     ss_pin = ss[0].replace("_", "", 1)
-                elif "PYn" == ss1_pin:
+                elif "NC" == ss1_pin:
                     ss1_pin = ss[0].replace("_", "", 1)
-                elif "PYn" == ss2_pin:
+                elif "NC" == ss2_pin:
                     ss2_pin = ss[0].replace("_", "", 1)
-                elif "PYn" == ss3_pin:
+                elif "NC" == ss3_pin:
                     ss3_pin = ss[0].replace("_", "", 1)
                     break
         break
@@ -992,7 +992,7 @@ def spi_pins_variant():
 
 
 def i2c_pins_variant():
-    sda_pin = scl_pin = "PYn"
+    sda_pin = scl_pin = "NC"
     # Iterate to find match instance if any
     for sda in i2csda_list:
         sda_inst = sda[2].split("_", 1)[0]
@@ -1042,7 +1042,7 @@ def serial_pins_variant():
             print("No serial instance number found!")
             serialnum = "-1"
     else:
-        serialtx_pin = serialtx_pin = "PYn"
+        serialtx_pin = serialtx_pin = "NC"
         serialnum = "-1"
         print("No serial found!")
     return dict(instance=serialnum, rx=serialrx_pin, tx=serialtx_pin)
