@@ -40,6 +40,9 @@ check_tool() {
     export PATH="$HOME/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin":$PATH
   fi
   if ! command -v $STM32CP_CLI > /dev/null 2>&1; then
+    export PATH="/opt/stm32cubeprog/bin":$PATH
+  fi
+  if ! command -v $STM32CP_CLI > /dev/null 2>&1; then
     echo "$STM32CP_CLI not found."
     echo "Please install it or add '<STM32CubeProgrammer path>/bin' to your PATH environment:"
     echo "https://www.st.com/en/development-tools/stm32cubeprog.html"
