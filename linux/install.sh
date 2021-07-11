@@ -5,6 +5,10 @@ if sudo [ -w /etc/udev/rules.d ]; then
   sudo cp -v 45-maple.rules /etc/udev/rules.d/45-maple.rules
   sudo chown root:root /etc/udev/rules.d/45-maple.rules
   sudo chmod 644 /etc/udev/rules.d/45-maple.rules
+  echo "Copying STM32-DFU udev rules..."
+  sudo cp -v 90-stm32-dfu.rules /etc/udev/rules.d/90-stm32-dfu.rules
+  sudo chown root:root /etc/udev/rules.d/90-stm32-dfu.rules
+  sudo chmod 644 /etc/udev/rules.d/90-stm32-dfu.rules
   echo "Reloading udev rules"
   sudo udevadm control --reload-rules
   echo "Adding current user to dialout group"
