@@ -226,7 +226,7 @@ case "$1" in
     echo "This file should be uploaded manually by SCP, SFTP, Kermit, or etc."
     echo "Then run \"sh ./$(basename "$output") start\" command in the board's console."
     echo "For detailed instructions, please visit:"
-    echo "  https://github.com/stm32duino/Arduino_Core_STM32/tree/master/variants/STM32MP157_DK/README.md"
+    echo "  https://github.com/stm32duino/Arduino_Core_STM32/tree/master/variants/STM32MP1xx/MP153AAC_MP153CAC_MP153DAC_MP153FAC_MP157AAC_MP157CAC_MP157DAC_MP157FAC"
     ;;
   *)
     echo "Usage: $0 [start|stop|restart]"
