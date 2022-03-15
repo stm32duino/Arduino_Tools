@@ -36,7 +36,7 @@ fi
 
 COUNTER=5
 while
-  "${DIR}/dfu-util.sh" -d "${usbID}" -a "${altID}" -D "${binfile}" ${dfuse_addr} -R
+  "${DIR}/dfu-util.sh" -d "${usbID}" -a "${altID}" -D "${binfile}" "${dfuse_addr}" -R
   ((ret = $?))
 do
   if [ $ret -eq 74 ] && [ $((--COUNTER)) -gt 0 ]; then

@@ -41,10 +41,10 @@ case "${UNAME_OS}" in
   Linux*)
     STM32CP_CLI=STM32_Programmer.sh
     if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
-      export PATH="$HOME/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin":$PATH
+      export PATH="$HOME/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin":"$PATH"
     fi
     if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
-      export PATH="/opt/stm32cubeprog/bin":$PATH
+      export PATH="/opt/stm32cubeprog/bin":"$PATH"
     fi
     if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
       echo "STM32CubeProgrammer not found ($STM32CP_CLI)."
@@ -57,7 +57,7 @@ case "${UNAME_OS}" in
   Darwin*)
     STM32CP_CLI=STM32_Programmer_CLI
     if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
-      export PATH="/Applications/STMicroelectronics/STM32Cube/STM32CubeProgrammer/STM32CubeProgrammer.app/Contents/MacOs/bin":$PATH
+      export PATH="/Applications/STMicroelectronics/STM32Cube/STM32CubeProgrammer/STM32CubeProgrammer.app/Contents/MacOs/bin":"$PATH"
     fi
     if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
       echo "STM32CubeProgrammer not found ($STM32CP_CLI)."
@@ -72,11 +72,11 @@ case "${UNAME_OS}" in
     if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
       if [ -n "${PROGRAMFILES+x}" ]; then
         STM32CP86=${PROGRAMFILES}/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin
-        export PATH=${STM32CP86}:$PATH
+        export PATH="${STM32CP86}":"$PATH"
       fi
       if [ -n "${PROGRAMW6432+x}" ]; then
         STM32CP=${PROGRAMW6432}/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin
-        export PATH=${STM32CP}:$PATH
+        export PATH="${STM32CP}":"$PATH"
       fi
       if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
         echo "STM32CubeProgrammer not found ($STM32CP_CLI)."
