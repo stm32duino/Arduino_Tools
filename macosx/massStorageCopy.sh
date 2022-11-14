@@ -67,7 +67,7 @@ done
 # Search the mountpoint
 IFS=' ,\t' read -ra mnt_list <<< "$mountpoint_name"
 for mnt in "${mnt_list[@]}"; do
-  mnt_path_list=($(df -Hl | grep -v "Mounted on" | rev | cut -d' ' -f1 | rev | sort -u | grep "$mnt"))
+  mnt_path_list=($(df -H | grep -v "Mounted on" | rev | cut -d' ' -f1 | rev | sort -u | grep "$mnt"))
   if [ ${#mnt_path_list[@]} -ne 0 ]; then
     # Ensure to have exact match
     for mnt_path in "${mnt_path_list[@]}"; do
