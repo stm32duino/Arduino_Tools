@@ -5,7 +5,6 @@ sudo apt-get install build-essentials
 sudo apt-get install libusb-1.0-0-dev
 sudo apt-get install autoconf automake autotools-dev
 
-cd dfu-util
 ./autogen.sh
 ./configure
 make
