@@ -1,5 +1,5 @@
 /* Copyright (C) 2015 Roger Clark <www.rogerclark.net>
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -17,7 +17,7 @@
 
 
 /* Copyright (C) 2003 Heiko Noordhof <heikyAusers.sf.net>
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -27,7 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <termios.h>
-#include <unistd.h>  
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -38,7 +38,7 @@
 int   openserial(char *devicename);
 void  closeserial(void);
 int   setDTR(unsigned short level);
-int   setRTS(unsigned short level); 
+int   setRTS(unsigned short level);
 
 
 /* Two globals for use by this module only */
@@ -53,11 +53,11 @@ void closeserial(void)
 }
 
 
-int openserial(char *devicename) 
+int openserial(char *devicename)
 {
      struct termios attr;
 
-     if ((fd = open(devicename, O_RDWR)) == -1) return 0; /* Error */ 
+     if ((fd = open(devicename, O_RDWR)) == -1) return 0; /* Error */
      atexit(closeserial);
 
      if (tcgetattr(fd, &oldterminfo) == -1) return 0; /* Error */
@@ -65,7 +65,7 @@ int openserial(char *devicename)
      attr.c_cflag |= CRTSCTS | CLOCAL;
      attr.c_oflag = 0;
      if (tcflush(fd, TCIOFLUSH) == -1) return 0; /* Error */
-     if (tcsetattr(fd, TCSANOW, &attr) == -1) return 0; /* Error */ 
+     if (tcsetattr(fd, TCSANOW, &attr) == -1) return 0; /* Error */
 
      /* Set the lines to a known state, and */
      /* finally return non-zero is successful. */
@@ -114,13 +114,13 @@ int setDTR(unsigned short level)
 }
 
 /* This portion of code was written by Roger Clark
- * It was informed by various other pieces of code written by Leaflabs to reset their 
- * Maple and Maple mini boards 
+ * It was informed by various other pieces of code written by Leaflabs to reset their
+ * Maple and Maple mini boards
  */
 
 main(int argc, char *argv[])
 {
- 	
+
 	if (argc<2 || argc >3)
 	{
 		printf("Usage upload-reset <serial_device> <Optional_delay_in_milliseconds>\n\r");
@@ -147,7 +147,7 @@ main(int argc, char *argv[])
 		usleep(50000L);
 
 		write(fd,"1EAF",4);
- 		
+
 		closeserial();
 		if (argc==3)
 		{
