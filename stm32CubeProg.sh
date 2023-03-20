@@ -1,5 +1,6 @@
 #!/bin/sh -
 set -o nounset # Treat unset variables as an error
+# set -o xtrace # Print command traces before executing command.
 
 STM32CP_CLI=
 ADDRESS=0x8000000
@@ -13,7 +14,7 @@ OPTS=""
 usage() {
   echo "############################################################"
   echo "##"
-  echo "## $(basename "$0") <protocol> <file_path> [OPTIONS]"
+  echo "## $(basename "$0") <protocol> <file_path> <offset> [OPTIONS]"
   echo "##"
   echo "## protocol:"
   echo "##   0: SWD"
@@ -22,6 +23,7 @@ usage() {
   echo "##   Note: prefix it by 1 to erase all sectors."
   echo "##         Ex: 10 erase all sectors using SWD interface."
   echo "## file_path: file path name to be downloaded: (bin, hex)"
+  echo "## offset: offset to add to $ADDRESS"
   echo "## Options:"
   echo "##   For SWD and DFU: no mandatory options"
   echo "##   For Serial: <com_port>"
@@ -92,7 +94,7 @@ case "${UNAME_OS}" in
     ;;
 esac
 
-if [ $# -lt 2 ]; then
+if [ $# -lt 3 ]; then
   echo "Not enough arguments!"
   usage 2
 fi
@@ -100,6 +102,9 @@ fi
 # Parse options
 PROTOCOL=$1
 FILEPATH=$2
+OFFSET=$3
+ADDRESS=$(printf "0x%x" $((ADDRESS + OFFSET)))
+
 # Protocol $1
 # 1x: Erase all sectors
 if [ "$1" -ge 10 ]; then
@@ -114,19 +119,19 @@ case $PROTOCOL in
   0)
     PORT="SWD"
     MODE="mode=UR"
-    shift 2
+    shift 3
     ;;
   1)
-    if [ $# -lt 3 ]; then
+    if [ $# -lt 4 ]; then
       usage 3
     else
-      PORT=$3
-      shift 3
+      PORT=$4
+      shift 4
     fi
     ;;
   2)
     PORT="USB1"
-    shift 2
+    shift 3
     ;;
   *)
     echo "Protocol unknown!"
