@@ -42,13 +42,13 @@ UNAME_OS="$(uname -s)"
 case "${UNAME_OS}" in
   Linux*)
     STM32CP_CLI=STM32_Programmer.sh
-    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
+    if ! command -v $STM32CP_CLI > /dev/null 2>&1; then
       export PATH="$HOME/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin":"$PATH"
     fi
-    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
+    if ! command -v $STM32CP_CLI > /dev/null 2>&1; then
       export PATH="/opt/stm32cubeprog/bin":"$PATH"
     fi
-    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
+    if ! command -v $STM32CP_CLI > /dev/null 2>&1; then
       echo "STM32CubeProgrammer not found ($STM32CP_CLI)."
       echo "Please install it or add '<STM32CubeProgrammer path>/bin' to your PATH environment:"
       echo "https://www.st.com/en/development-tools/stm32cubeprog.html"
@@ -58,10 +58,10 @@ case "${UNAME_OS}" in
     ;;
   Darwin*)
     STM32CP_CLI=STM32_Programmer_CLI
-    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
+    if ! command -v $STM32CP_CLI > /dev/null 2>&1; then
       export PATH="/Applications/STMicroelectronics/STM32Cube/STM32CubeProgrammer/STM32CubeProgrammer.app/Contents/MacOs/bin":"$PATH"
     fi
-    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
+    if ! command -v $STM32CP_CLI > /dev/null 2>&1; then
       echo "STM32CubeProgrammer not found ($STM32CP_CLI)."
       echo "Please install it or add '<STM32CubeProgrammer path>/bin' to your PATH environment:"
       echo "https://www.st.com/en/development-tools/stm32cubeprog.html"
@@ -71,7 +71,7 @@ case "${UNAME_OS}" in
     ;;
   Windows*)
     STM32CP_CLI=STM32_Programmer_CLI.exe
-    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
+    if ! command -v $STM32CP_CLI > /dev/null 2>&1; then
       if [ -n "${PROGRAMFILES+x}" ]; then
         STM32CP86=${PROGRAMFILES}/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin
         export PATH="${STM32CP86}":"$PATH"
@@ -80,7 +80,7 @@ case "${UNAME_OS}" in
         STM32CP=${PROGRAMW6432}/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin
         export PATH="${STM32CP}":"$PATH"
       fi
-      if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
+      if ! command -v $STM32CP_CLI > /dev/null 2>&1; then
         echo "STM32CubeProgrammer not found ($STM32CP_CLI)."
         echo "Please install it or add '<STM32CubeProgrammer path>\bin' to your PATH environment:"
         echo "https://www.st.com/en/development-tools/stm32cubeprog.html"
@@ -143,6 +143,6 @@ if [ $# -gt 0 ]; then
   OPTS="$*"
 fi
 
-${STM32CP_CLI} -c port=${PORT} ${MODE} ${ERASE:+"-e all"} -q -d "${FILEPATH}" ${ADDRESS} "${OPTS}"
+${STM32CP_CLI} -c port=${PORT} ${MODE} ${ERASE:+"-e all"} -q -d "${FILEPATH}" "${ADDRESS}" "${OPTS}"
 
 exit $?
