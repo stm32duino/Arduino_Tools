@@ -30,10 +30,8 @@ usage() {
   echo "##     com_port: serial identifier (mandatory). Ex: /dev/ttyS0 or COM1"
   echo "##"
   echo "## Note: all trailing arguments will be passed to the $STM32CP_CLI"
-  echo "##   They have to be valid commands for STM32 MCU"
-  echo "##   Ex: -g: Run the code at the specified address"
-  echo "##       -rst: Reset system"
-  echo "##       -s: start automatically (optional)"
+  echo "##   They have to be valid commands for STM32CubeProgrammer cli"
+  echo "##   Ex: -rst: Reset system"
   echo "############################################################"
   exit "$1"
 }
@@ -143,6 +141,6 @@ if [ $# -gt 0 ]; then
   OPTS="$*"
 fi
 
-${STM32CP_CLI} -c port=${PORT} ${MODE} ${ERASE:+"-e all"} -q -d "${FILEPATH}" "${ADDRESS}" "${OPTS}"
+${STM32CP_CLI} -c port=${PORT} ${MODE} ${ERASE:+"-e all"} -q -d "${FILEPATH}" "${ADDRESS}" -s "${ADDRESS}" "${OPTS}"
 
 exit $?
