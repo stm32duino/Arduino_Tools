@@ -3,7 +3,6 @@ This files includes licensing information for parts of this repository.
 [GPLv2](#gplv2) is used for:
 * [busybox-w32](https://frippery.org/busybox/)
 * [dfu-util](http://dfu-util.sourceforge.net/) (also available [here](src/dfu-util/COPYING))
-* maple_loader
 * upload-reset
 
 [GPLv3](#gplv3) is used for:
