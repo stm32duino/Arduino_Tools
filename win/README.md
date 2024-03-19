@@ -4,6 +4,6 @@
   - `run_arduino_gen.sh`
   - `stm32CubeProg.sh`
 
-Currently FRP-4264-gc79f13025, downloaded from [busybox-w32].
+Version FRP-5301-gda71f7c57 (64-bit), downloaded from [busybox-w32].
 
 [busybox-w32]: https://frippery.org/busybox/
