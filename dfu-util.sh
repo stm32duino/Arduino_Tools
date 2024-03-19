@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# Use the correct dfu-util program based on the architecture
+# Use the correct dfu-util program based on the host
 #
 
 # Get the directory where the script is running.
@@ -9,11 +9,7 @@ UNAME_OS="$(uname -s)"
 case "${UNAME_OS}" in
   Linux*)
     # Choose dfu program by arch
-    if [ "$(uname -m)" = "x86_64" ]; then
-      DFU_UTIL=${DIR}/linux/dfu-util_x86_64/dfu-util
-    else
-      DFU_UTIL=${DIR}/linux/dfu-util/dfu-util
-    fi
+    DFU_UTIL=${DIR}/linux/dfu-util/dfu-util
     ;;
   Darwin*)
     DFU_UTIL=${DIR}/macosx/dfu-util/dfu-util
