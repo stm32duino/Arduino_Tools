@@ -1,0 +1,2 @@
+# STM32_HID_bootloader
+ATTRS{idProduct}=="beba", ATTRS{idVendor}=="1209", MODE:="666"
