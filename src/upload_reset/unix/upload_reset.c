@@ -118,44 +118,47 @@ int setDTR(unsigned short level)
  * Maple and Maple mini boards
  */
 
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-
+  int ret = 0;
 	if (argc<2 || argc >3)
 	{
 		printf("Usage upload-reset <serial_device> <Optional_delay_in_milliseconds>\n\r");
-		return;
+		ret = 1;
 	}
+  else {
+    if (openserial(argv[1]))
+    {
+      // Send magic sequence of DTR and RTS followed by the magic word "1EAF"
+      setRTS(false);
+      setDTR(false);
+      setDTR(true);
 
- 	if (openserial(argv[1]))
-	{
-		// Send magic sequence of DTR and RTS followed by the magic word "1EAF"
-		setRTS(false);
- 		setDTR(false);
- 		setDTR(true);
+      usleep(50000L);
 
-		usleep(50000L);
+      setDTR(false);
+      setRTS(true);
+      setDTR(true);
 
-		setDTR(false);
-		setRTS(true);
-		setDTR(true);
+      usleep(50000L);
 
-		usleep(50000L);
+      setDTR(false);
 
-		setDTR(false);
+      usleep(50000L);
 
-		usleep(50000L);
+      write(fd,"1EAF",4);
 
-		write(fd,"1EAF",4);
-
-		closeserial();
-		if (argc==3)
-		{
-			usleep(atol(argv[2])*1000L);
-		}
-	}
-	else
-	{
-		printf("Failed to open serial device.\n\r");
-	}
+      closeserial();
+      if (argc==3)
+      {
+        usleep(atol(argv[2])*1000L);
+      }
+    }
+    else
+    {
+      printf("Failed to open serial device.\n\r");
+      ret = 2;
+    }
+  }
+  return ret;
 }
