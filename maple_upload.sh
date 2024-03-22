@@ -2,13 +2,14 @@
 
 set -e
 
-if [ $# -lt 4 ]; then
-  echo "Usage: $0 <dummy_port> <altID> <usbID> <binfile>" >&2
+if [ $# -lt 5 ]; then
+  echo "Usage: $0 <dummy_port> <altID> <usbVID> <usbPID> <binfile>" >&2
   exit 1
 fi
 altID="$2"
-usbID="$3"
-binfile="$4"
+usbVID=${3#"0x"}
+usbPID=${4#"0x"}
+binfile="$5"
 EXT=""
 
 UNAME_OS="$(uname -s)"
@@ -52,7 +53,7 @@ fi
 
 COUNTER=5
 while
-  "${DIR}/dfu-util.sh" -d "${usbID}" -a "${altID}" -D "${binfile}" -R
+  "${DIR}/dfu-util.sh" -d "${usbVID}:${usbPID}" -a "${altID}" -D "${binfile}" -R
   ret=$?
 do
   if [ $ret -eq 0 ]; then
