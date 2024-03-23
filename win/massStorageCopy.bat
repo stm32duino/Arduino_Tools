@@ -1,13 +1,5 @@
 @echo off
 
-rem Exit codes for xcopy
-rem code | Description
-rem  0   | Files were copied without error.
-rem  1   | No files were found to copy.
-rem  2   | The user pressed CTRL+C to terminate xcopy.
-rem  4   | Initialization error occurred. There is not enough memory or disk space, or you entered an invalid drive name or invalid syntax on the command line.
-rem  5   | Disk write error occurred.
-
 set SOURCE=%2
 set SRC_PARSE=%SOURCE:/=\%
 set TARGET=%4
@@ -43,7 +35,7 @@ setlocal enabledelayedexpansion
 for /F "skip=1 tokens=*" %%a in ('WMIC LOGICALDISK where "volumename like '%~1'" get deviceid 2^>NUL') do if not defined id set id=%%a
   call set "deviceid=%%id: =%%"
   if not "%deviceid%" == "" (
-    XCOPY %SRC_PARSE% %deviceid% /Y /Q
+    %~dp0busybox.exe cp -f %SRC_PARSE% %deviceid%
     if  !errorlevel! == 0 (echo Upload complete on %1 ^(%deviceid%^))
     exit !errorlevel!)
 goto :eof
