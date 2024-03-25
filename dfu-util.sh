@@ -9,10 +9,10 @@ UNAME_OS="$(uname -s)"
 case "${UNAME_OS}" in
   Linux*)
     # Choose dfu program by arch
-    DFU_UTIL=${DIR}/linux/dfu-util/dfu-util
+    DFU_UTIL=${DIR}/linux/dfu-util
     ;;
   Darwin*)
-    DFU_UTIL=${DIR}/macosx/dfu-util/dfu-util
+    DFU_UTIL=${DIR}/macosx/dfu-util
     if [ ! -x "${DFU_UTIL}" ]; then
       DFU_UTIL=/opt/local/bin/dfu-util
     fi
