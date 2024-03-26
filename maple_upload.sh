@@ -52,11 +52,7 @@ fi
 
 COUNTER=5
 while
-  if [ $# -eq 5 ]; then
-    "${DIR}/dfu-util.sh" -d "${usbID}" -a "${altID}" -D "${binfile}" "--dfuse-address $5" -R
-  else
-    "${DIR}/dfu-util.sh" -d "${usbID}" -a "${altID}" -D "${binfile}" -R
-  fi
+  "${DIR}/dfu-util.sh" -d "${usbID}" -a "${altID}" -D "${binfile}" -R
   ret=$?
 do
   if [ $ret -eq 0 ]; then
