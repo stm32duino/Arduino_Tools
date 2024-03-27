@@ -70,13 +70,13 @@ do
   fi
 done
 
-printf "Waiting for %s serial..." "${dummy_port_fullpath}" >&2
+printf "Waiting for %s serial..." "${dummy_port_fullpath}"
 COUNTER=40
 if [ ${OS_DIR} = "win" ]; then
   while [ $COUNTER -gt 0 ]; do
     if ! "${DIR}/${OS_DIR}/check_port${EXT}" "${dummy_port_fullpath}"; then
       COUNTER=$((COUNTER - 1))
-      printf "." >&2
+      printf "."
       sleep 0.1
     else
       break
@@ -86,7 +86,7 @@ if [ ${OS_DIR} = "win" ]; then
 else
   while [ ! -r "${dummy_port_fullpath}" ] && [ $COUNTER -gt 0 ]; do
     COUNTER=$((COUNTER - 1))
-    printf "." >&2
+    printf "."
     sleep 0.1
   done
 fi
@@ -95,5 +95,5 @@ if [ $COUNTER -eq -0 ]; then
   echo " Timed out." >&2
   exit 1
 else
-  echo " Done." >&2
+  echo " Done."
 fi
