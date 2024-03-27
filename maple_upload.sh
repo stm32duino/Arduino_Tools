@@ -70,6 +70,8 @@ do
   fi
 done
 
+sleep 1
+
 printf "Waiting for %s serial..." "${dummy_port_fullpath}"
 COUNTER=40
 if [ ${OS_DIR} = "win" ]; then
