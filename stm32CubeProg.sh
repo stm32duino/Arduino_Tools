@@ -129,6 +129,7 @@ case $PROTOCOL in
     ;;
   2)
     PORT="USB1"
+    ERASE="yes"
     shift 3
     ;;
   *)
