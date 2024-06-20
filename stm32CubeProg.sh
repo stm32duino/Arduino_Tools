@@ -1,75 +1,143 @@
 #!/bin/sh -
 set -o nounset # Treat unset variables as an error
-# set -o xtrace # Print command traces before executing command.
+# set -o xtrace  # Print command traces before executing command.
 
 STM32CP_CLI=
+INTERFACE=
+PORT=
+FILEPATH=
 ADDRESS=0x8000000
-ERASE=""
-MODE=""
-PORT=""
-OPTS=""
+OFFSET=0x0
+# Optional
+ERASE=
+# Optional for Serial
+RTS=
+DTR=
+# Mandatory for DFU
+VID=
+PID=
 
 ###############################################################################
 ## Help function
 usage() {
-  echo "############################################################"
-  echo "##"
-  echo "## $(basename "$0") <protocol> <file_path> <offset> [OPTIONS]"
-  echo "##"
-  echo "## protocol:"
-  echo "##   0: SWD"
-  echo "##   1: Serial"
-  echo "##   2: DFU"
-  echo "##   Note: prefix it by 1 to erase all sectors."
-  echo "##         Ex: 10 erase all sectors using SWD interface."
-  echo "## file_path: file path name to be downloaded: (bin, hex)"
-  echo "## offset: offset to add to $ADDRESS"
-  echo "## Options:"
-  echo "##   For SWD and DFU: no mandatory options"
-  echo "##   For Serial: <com_port>"
-  echo "##     com_port: serial identifier (mandatory). Ex: /dev/ttyS0 or COM1"
-  echo "##"
-  echo "## Note: all trailing arguments will be passed to the $STM32CP_CLI"
-  echo "##   They have to be valid commands for STM32CubeProgrammer cli"
-  echo "##   Ex: -rst: Reset system"
-  echo "############################################################"
+  echo "Usage: $(basename "$0") [OPTIONS]...
+
+  Mandatory options:
+    -i, --interface <'swd'/'dfu'/'serial'>   interface identifier: 'swd', 'dfu' or 'serial'
+    -f, --file <path>                        file path to be downloaded: bin or hex
+  Optional options:
+    -e, --erase                              erase all sectors before flashing
+    -o, --offset <hex value>                 offset from flash base ($ADDRESS) where flashing should start
+
+  Specific options for Serial protocol:
+    Mandatory:
+    -c, --com <name>                         serial identifier, ex: COM1 or /dev/ttyS0,...
+    Optional:
+      -r, --rts <low/high>                   polarity of RTS signal ('low' by default)
+      -d, --dtr <low/high>                   polarity of DTR signal
+
+  Specific options for DFU protocol:
+    Mandatory:
+      -v, --vid <hex value>                  vendor id, ex: 0x0483
+      -p, --pid <hex value>                  product id, ex: 0xdf11
+
+" >&2
   exit "$1"
 }
 
+aborting() {
+  echo "STM32CubeProgrammer not found ($STM32CP_CLI).
+  Please install it or add '<STM32CubeProgrammer path>/bin' to your PATH environment:
+  https://www.st.com/en/development-tools/stm32cubeprog.html
+  Aborting!" >&2
+  exit 1
+}
+
+# parse command line arguments
+# options may be followed by one colon to indicate they have a required arg
+if ! options=$(getopt -a -o hi:ef:o:c:r:d:v:p: --long help,interface:,erase,file:,offset:,com:,rts:,dtr:,vid:,pid: -- "$@"); then
+  echo "Terminating..." >&2
+  exit 1
+fi
+
+eval set -- "$options"
+
+while true; do
+  case "$1" in
+    -h | --help | -\?)
+      usage 0
+      ;;
+    -i | --interface)
+      INTERFACE=$(echo "$2" | tr '[:upper:]' '[:lower:]')
+      echo "Selected interface: $INTERFACE"
+      shift 2
+      ;;
+    -e | --erase)
+      ERASE="--erase all"
+      shift 1
+      ;;
+    -f | --file)
+      FILEPATH=$2
+      shift 2
+      ;;
+    -o | --offset)
+      OFFSET=$2
+      ADDRESS=$(printf "0x%x" $((ADDRESS + OFFSET)))
+      shift 2
+      ;;
+    -c | --com)
+      PORT=$2
+      shift 2
+      ;;
+    -r | --rts)
+      RTS=$(echo "rts=$2" | tr '[:upper:]' '[:lower:]')
+      shift 2
+      ;;
+    -d | --dtr)
+      DTR=$(echo "dtr=$2" | tr '[:upper:]' '[:lower:]')
+      shift 2
+      ;;
+    -v | --vid)
+      VID=$2
+      shift 2
+      ;;
+    -p | --pid)
+      PID=$2
+      shift 2
+      ;;
+    --)
+      shift
+      break
+      ;;
+  esac
+done
+# Check STM32CubeProgrammer cli availability, fallback to dfu-util if protocol dfu
 UNAME_OS="$(uname -s)"
 case "${UNAME_OS}" in
   Linux*)
     STM32CP_CLI=STM32_Programmer.sh
-    if ! command -v $STM32CP_CLI > /dev/null 2>&1; then
+    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
       export PATH="$HOME/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin":"$PATH"
     fi
-    if ! command -v $STM32CP_CLI > /dev/null 2>&1; then
+    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
       export PATH="/opt/stm32cubeprog/bin":"$PATH"
     fi
-    if ! command -v $STM32CP_CLI > /dev/null 2>&1; then
-      echo "STM32CubeProgrammer not found ($STM32CP_CLI)."
-      echo "Please install it or add '<STM32CubeProgrammer path>/bin' to your PATH environment:"
-      echo "https://www.st.com/en/development-tools/stm32cubeprog.html"
-      echo "Aborting!"
-      exit 1
+    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
+      aborting
     fi
     ;;
   Darwin*)
     STM32CP_CLI=STM32_Programmer_CLI
-    if ! command -v $STM32CP_CLI > /dev/null 2>&1; then
+    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
       export PATH="/Applications/STMicroelectronics/STM32Cube/STM32CubeProgrammer/STM32CubeProgrammer.app/Contents/MacOs/bin":"$PATH"
     fi
-    if ! command -v $STM32CP_CLI > /dev/null 2>&1; then
-      echo "STM32CubeProgrammer not found ($STM32CP_CLI)."
-      echo "Please install it or add '<STM32CubeProgrammer path>/bin' to your PATH environment:"
-      echo "https://www.st.com/en/development-tools/stm32cubeprog.html"
-      echo "Aborting!"
-      exit 1
+    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
+      aborting
     fi
     ;;
   Windows*)
     STM32CP_CLI=STM32_Programmer_CLI.exe
-    if ! command -v $STM32CP_CLI > /dev/null 2>&1; then
+    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
       if [ -n "${PROGRAMFILES+x}" ]; then
         STM32CP86=${PROGRAMFILES}/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin
         export PATH="${STM32CP86}":"$PATH"
@@ -78,69 +146,65 @@ case "${UNAME_OS}" in
         STM32CP=${PROGRAMW6432}/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin
         export PATH="${STM32CP}":"$PATH"
       fi
-      if ! command -v $STM32CP_CLI > /dev/null 2>&1; then
-        echo "STM32CubeProgrammer not found ($STM32CP_CLI)."
-        echo "Please install it or add '<STM32CubeProgrammer path>\bin' to your PATH environment:"
-        echo "https://www.st.com/en/development-tools/stm32cubeprog.html"
-        echo "Aborting!"
+      if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
+        aborting
       fi
     fi
     ;;
   *)
-    echo "Unknown host OS: ${UNAME_OS}."
+    echo "Unknown host OS: ${UNAME_OS}." >&2
     exit 1
     ;;
 esac
 
-if [ $# -lt 3 ]; then
-  echo "Not enough arguments!"
-  usage 2
+# Check mandatory options
+if [ -z "${INTERFACE}" ]; then
+  echo "Error missing interface!" >&2
+  usage 1
+fi
+if [ -z "${FILEPATH}" ]; then
+  echo "Error missing file argmument!" >&2
+  usage 1
+fi
+if [ ! -r "${FILEPATH}" ]; then
+  echo "Error ${FILEPATH} does not exist!" >&2
+  usage 1
 fi
 
-# Parse options
-PROTOCOL=$1
-FILEPATH=$2
-OFFSET=$3
-ADDRESS=$(printf "0x%x" $((ADDRESS + OFFSET)))
-
-# Protocol $1
-# 1x: Erase all sectors
-if [ "$1" -ge 10 ]; then
-  ERASE="yes"
-  PROTOCOL=$(($1 - 10))
-fi
-# Protocol $1
-# 0: SWD
-# 1: Serial
-# 2: DFU
-case $PROTOCOL in
-  0)
-    PORT="SWD"
-    MODE="mode=UR"
-    shift 3
+case "${INTERFACE}" in
+  swd)
+    ${STM32CP_CLI} --connect port=SWD mode=UR "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${ADDRESS}"
     ;;
-  1)
-    if [ $# -lt 4 ]; then
-      usage 3
-    else
-      PORT=$4
-      shift 4
+  dfu)
+    if [ -z "${VID}" ] || [ -z "${PID}" ]; then
+      echo "Missing mandatory arguments for DFU mode (VID/PID)!" >&2
+      exit 1
     fi
+    ${STM32CP_CLI} --connect port=usb1 VID="${VID}" PID="${PID}" "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${ADDRESS}"
     ;;
-  2)
-    PORT="USB1"
-    shift 3
+  serial)
+    if [ -z "${PORT}" ]; then
+      echo "Missing mandatory arguments for serial mode: serial identifier!" >&2
+      exit 1
+    fi
+    if [ -n "${RTS}" ]; then
+      if [ "${RTS}" != "rts=low" ] && [ "${RTS}" != "rts=high" ]; then
+        echo "Wrong rts value waiting high or low instead of ${RTS}" >&2
+        exit 1
+      fi
+    fi
+    if [ -n "${DTR}" ]; then
+      if [ "${DTR}" != "dtr=low" ] && [ "${DTR}" != "dtr=high" ]; then
+        echo "Wrong dtr value waiting high or low instead of ${DTR}" >&2
+        exit 1
+      fi
+    fi
+    ${STM32CP_CLI} --connect port="${PORT}" "${RTS}" "${DTR}" "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${ADDRESS}"
     ;;
   *)
-    echo "Protocol unknown!"
+    echo "Protocol unknown!" >&2
     usage 4
     ;;
 esac
-
-if [ $# -gt 0 ]; then
-  OPTS="$*"
-fi
-
-${STM32CP_CLI} -c port=${PORT} ${MODE} ${ERASE:+"-e all"} -q -d "${FILEPATH}" "${ADDRESS}" -s "${ADDRESS}" "${OPTS}"
 
 exit $?

@@ -2,13 +2,14 @@
 
 set -e
 
-if [ $# -lt 4 ]; then
-  echo "Usage: $0 <dummy_port> <altID> <usbID> <binfile>" >&2
+if [ $# -lt 5 ]; then
+  echo "Usage: $0 <dummy_port> <altID> <usbVID> <usbPID> <binfile>" >&2
   exit 1
 fi
 altID="$2"
-usbID="$3"
-binfile="$4"
+usbVID=${3#"0x"}
+usbPID=${4#"0x"}
+binfile="$5"
 EXT=""
 
 UNAME_OS="$(uname -s)"
@@ -52,11 +53,7 @@ fi
 
 COUNTER=5
 while
-  if [ $# -eq 5 ]; then
-    "${DIR}/dfu-util.sh" -d "${usbID}" -a "${altID}" -D "${binfile}" "--dfuse-address $5" -R
-  else
-    "${DIR}/dfu-util.sh" -d "${usbID}" -a "${altID}" -D "${binfile}" -R
-  fi
+  "${DIR}/dfu-util.sh" -d "${usbVID}:${usbPID}" -a "${altID}" -D "${binfile}" -R
   ret=$?
 do
   if [ $ret -eq 0 ]; then
@@ -73,13 +70,15 @@ do
   fi
 done
 
-printf "Waiting for %s serial..." "${dummy_port_fullpath}" >&2
+sleep 1
+
+printf "Waiting for %s serial..." "${dummy_port_fullpath}"
 COUNTER=40
 if [ ${OS_DIR} = "win" ]; then
   while [ $COUNTER -gt 0 ]; do
     if ! "${DIR}/${OS_DIR}/check_port${EXT}" "${dummy_port_fullpath}"; then
       COUNTER=$((COUNTER - 1))
-      printf "." >&2
+      printf "."
       sleep 0.1
     else
       break
@@ -89,7 +88,7 @@ if [ ${OS_DIR} = "win" ]; then
 else
   while [ ! -r "${dummy_port_fullpath}" ] && [ $COUNTER -gt 0 ]; do
     COUNTER=$((COUNTER - 1))
-    printf "." >&2
+    printf "."
     sleep 0.1
   done
 fi
@@ -98,5 +97,5 @@ if [ $COUNTER -eq -0 ]; then
   echo " Timed out." >&2
   exit 1
 else
-  echo " Done." >&2
+  echo " Done."
 fi
