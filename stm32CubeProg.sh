@@ -23,23 +23,23 @@ usage() {
   echo "Usage: $(basename "$0") [OPTIONS]...
 
   Mandatory options:
-    -i, --interface <'swd'/'dfu'/'serial'>   interface identifier: 'swd', 'dfu' or 'serial'
-    -f, --file <path>                        file path to be downloaded: bin or hex
+    -i <'swd'/'dfu'/'serial'>         interface identifier: 'swd', 'dfu' or 'serial'
+    -f <path>                         file path to be downloaded: bin or hex
   Optional options:
-    -e, --erase                              erase all sectors before flashing
-    -o, --offset <hex value>                 offset from flash base ($ADDRESS) where flashing should start
+    -e
+    -o <hex value>                    offset from flash base ($ADDRESS) where flashing should start
 
   Specific options for Serial protocol:
     Mandatory:
-    -c, --com <name>                         serial identifier, ex: COM1 or /dev/ttyS0,...
+    -c <name>                         serial identifier, ex: COM1 or /dev/ttyS0,...
     Optional:
-      -r, --rts <low/high>                   polarity of RTS signal ('low' by default)
-      -d, --dtr <low/high>                   polarity of DTR signal
+      -r <low/high>                   polarity of RTS signal ('low' by default)
+      -d <low/high>                   polarity of DTR signal
 
   Specific options for DFU protocol:
     Mandatory:
-      -v, --vid <hex value>                  vendor id, ex: 0x0483
-      -p, --pid <hex value>                  product id, ex: 0xdf11
+      -v <hex value>                  vendor id, ex: 0x0483
+      -p <hex value>                  product id, ex: 0xdf11
 
 " >&2
   exit "$1"
@@ -55,7 +55,7 @@ aborting() {
 
 # parse command line arguments
 # options may be followed by one colon to indicate they have a required arg
-if ! options=$(getopt -a -o hi:ef:o:c:r:d:v:p: --long help,interface:,erase,file:,offset:,com:,rts:,dtr:,vid:,pid: -- "$@"); then
+if ! options=$(getopt hi:ef:o:c:r:d:v:p: "$@"); then
   echo "Terminating..." >&2
   exit 1
 fi
@@ -64,44 +64,44 @@ eval set -- "$options"
 
 while true; do
   case "$1" in
-    -h | --help | -\?)
+    -h | -\?)
       usage 0
       ;;
-    -i | --interface)
+    -i)
       INTERFACE=$(echo "$2" | tr '[:upper:]' '[:lower:]')
       echo "Selected interface: $INTERFACE"
       shift 2
       ;;
-    -e | --erase)
+    -e)
       ERASE="--erase all"
       shift 1
       ;;
-    -f | --file)
+    -f)
       FILEPATH=$2
       shift 2
       ;;
-    -o | --offset)
+    -o)
       OFFSET=$2
       ADDRESS=$(printf "0x%x" $((ADDRESS + OFFSET)))
       shift 2
       ;;
-    -c | --com)
+    -c)
       PORT=$2
       shift 2
       ;;
-    -r | --rts)
+    -r)
       RTS=$(echo "rts=$2" | tr '[:upper:]' '[:lower:]')
       shift 2
       ;;
-    -d | --dtr)
+    -d)
       DTR=$(echo "dtr=$2" | tr '[:upper:]' '[:lower:]')
       shift 2
       ;;
-    -v | --vid)
+    -v)
       VID=$2
       shift 2
       ;;
-    -p | --pid)
+    -p)
       PID=$2
       shift 2
       ;;
