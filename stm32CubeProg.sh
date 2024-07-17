@@ -2,6 +2,8 @@
 set -o nounset # Treat unset variables as an error
 # set -o xtrace  # Print command traces before executing command.
 
+UNAME_OS="$(uname -s)"
+GNU_GETOPT=
 STM32CP_CLI=
 INTERFACE=
 PORT=
@@ -53,11 +55,73 @@ aborting() {
   exit 1
 }
 
+# Check STM32CubeProgrammer cli availability and getopt version
+case "${UNAME_OS}" in
+  Linux*)
+    STM32CP_CLI=STM32_Programmer.sh
+    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
+      export PATH="$HOME/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin":"$PATH"
+    fi
+    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
+      export PATH="/opt/stm32cubeprog/bin":"$PATH"
+    fi
+    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
+      aborting
+    fi
+    ;;
+  Darwin*)
+    STM32CP_CLI=STM32_Programmer_CLI
+    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
+      export PATH="/Applications/STMicroelectronics/STM32Cube/STM32CubeProgrammer/STM32CubeProgrammer.app/Contents/MacOs/bin":"$PATH"
+    fi
+    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
+      aborting
+    fi
+    if ! command -v /usr/local/opt/gnu-getopt/bin/getopt >/dev/null 2>&1; then
+      if ! command -v /opt/homebrew/opt/gnu-getopt/bin/getopt >/dev/null 2>&1; then
+        echo "Warning: long options not supported due to getopt from FreeBSD usage."
+        GNU_GETOPT=n
+      else
+        export PATH="/opt/homebrew/opt/gnu-getopt/bin":"$PATH"
+      fi
+    else
+      export PATH="/usr/local/opt/gnu-getopt/bin":"$PATH"
+    fi
+    ;;
+  Windows*)
+    STM32CP_CLI=STM32_Programmer_CLI.exe
+    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
+      if [ -n "${PROGRAMFILES+x}" ]; then
+        STM32CP86=${PROGRAMFILES}/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin
+        export PATH="${STM32CP86}":"$PATH"
+      fi
+      if [ -n "${PROGRAMW6432+x}" ]; then
+        STM32CP=${PROGRAMW6432}/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin
+        export PATH="${STM32CP}":"$PATH"
+      fi
+      if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
+        aborting
+      fi
+    fi
+    ;;
+  *)
+    echo "Unknown host OS: ${UNAME_OS}." >&2
+    exit 1
+    ;;
+esac
+
 # parse command line arguments
 # options may be followed by one colon to indicate they have a required arg
-if ! options=$(getopt -a -o hi:ef:o:c:r:d:v:p: --long help,interface:,erase,file:,offset:,com:,rts:,dtr:,vid:,pid: -- "$@"); then
-  echo "Terminating..." >&2
-  exit 1
+if [ -n "${GNU_GETOPT}" ]; then
+  if ! options=$(getopt hi:ef:o:c:r:d:v:p: "$@"); then
+    echo "Terminating..." >&2
+    exit 1
+  fi
+else
+  if ! options=$(getopt -a -o hi:ef:o:c:r:d:v:p: --long help,interface:,erase,file:,offset:,com:,rts:,dtr:,vid:,pid: -- "$@"); then
+    echo "Terminating..." >&2
+    exit 1
+  fi
 fi
 
 eval set -- "$options"
@@ -109,53 +173,12 @@ while true; do
       shift
       break
       ;;
+    *)
+      echo "Unknown option $1"
+      usage 1
+      ;;
   esac
 done
-# Check STM32CubeProgrammer cli availability, fallback to dfu-util if protocol dfu
-UNAME_OS="$(uname -s)"
-case "${UNAME_OS}" in
-  Linux*)
-    STM32CP_CLI=STM32_Programmer.sh
-    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
-      export PATH="$HOME/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin":"$PATH"
-    fi
-    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
-      export PATH="/opt/stm32cubeprog/bin":"$PATH"
-    fi
-    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
-      aborting
-    fi
-    ;;
-  Darwin*)
-    STM32CP_CLI=STM32_Programmer_CLI
-    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
-      export PATH="/Applications/STMicroelectronics/STM32Cube/STM32CubeProgrammer/STM32CubeProgrammer.app/Contents/MacOs/bin":"$PATH"
-    fi
-    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
-      aborting
-    fi
-    ;;
-  Windows*)
-    STM32CP_CLI=STM32_Programmer_CLI.exe
-    if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
-      if [ -n "${PROGRAMFILES+x}" ]; then
-        STM32CP86=${PROGRAMFILES}/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin
-        export PATH="${STM32CP86}":"$PATH"
-      fi
-      if [ -n "${PROGRAMW6432+x}" ]; then
-        STM32CP=${PROGRAMW6432}/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin
-        export PATH="${STM32CP}":"$PATH"
-      fi
-      if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
-        aborting
-      fi
-    fi
-    ;;
-  *)
-    echo "Unknown host OS: ${UNAME_OS}." >&2
-    exit 1
-    ;;
-esac
 
 # Check mandatory options
 if [ -z "${INTERFACE}" ]; then
