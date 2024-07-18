@@ -25,7 +25,7 @@ usage() {
   echo "Usage: $(basename "$0") [OPTIONS]...
 
   Mandatory options:
-    -i, --interface <'swd'/'dfu'/'serial'>   interface identifier: 'swd', 'dfu' or 'serial'
+    -i, --interface <'swd'/'dfu'/'serial'/'jlink'>   interface identifier: 'swd', 'dfu', 'serial' or 'jlink'
     -f, --file <path>                        file path to be downloaded: bin or hex
   Optional options:
     -e, --erase                              erase all sectors before flashing
@@ -223,6 +223,9 @@ case "${INTERFACE}" in
       fi
     fi
     ${STM32CP_CLI} --connect port="${PORT}" "${RTS}" "${DTR}" "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${ADDRESS}"
+    ;;
+  jlink)
+    ${STM32CP_CLI} --connect port=JLINK ap=0 "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${ADDRESS}"
     ;;
   *)
     echo "Protocol unknown!" >&2
