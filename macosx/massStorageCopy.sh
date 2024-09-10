@@ -20,12 +20,11 @@ usage() {
   echo "## Note:"
   echo "##   -I and -O are optionals and kept for backward compatibility."
   echo "############################################################"
-  exit 0
+  exit "$1"
 }
 
 if [ $# -lt 2 ]; then
-  usage
-  exit 1
+  usage 1
 fi
 
 # Parsing options
