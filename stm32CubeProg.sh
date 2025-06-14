@@ -8,9 +8,11 @@ STM32CP_CLI=
 INTERFACE=
 PORT=
 FILEPATH=
-ADDRESS=0x8000000
 OFFSET=0x0
 # Optional
+ADDRESS=0x8000000
+START=0x8000000
+MODE=UR
 ERASE=
 # Optional for Serial
 RTS=
@@ -28,7 +30,10 @@ usage() {
     -i, --interface <'swd'/'dfu'/'serial'/'jlink'>   interface identifier: 'swd', 'dfu', 'serial' or 'jlink'
     -f, --file <path>                        file path to be downloaded: bin or hex
   Optional options:
+    -a, --address <hex value>                flash base address. Default: $ADDRESS
     -e, --erase                              erase all sectors before flashing
+    -m, --mode                               connection mode: UR (default), HOTPLUG, POWERDOWN or hwRstPulse
+    -s, --start <hex value>                  start address after flashing. Default: $START
     -o, --offset <hex value>                 offset from flash base ($ADDRESS) where flashing should start
 
   Specific options for Serial protocol:
@@ -118,7 +123,7 @@ if [ -n "${GNU_GETOPT}" ]; then
     exit 1
   fi
 else
-  if ! options=$(getopt -a -o hi:ef:o:c:r:d:v:p: --long help,interface:,erase,file:,offset:,com:,rts:,dtr:,vid:,pid: -- "$@"); then
+  if ! options=$(getopt -a -o a:hi:m:ef:o:c:r:s:d:v:p: --long address:,help,interface:,mode:,erase,file:,start:,offset:,com:,rts:,dtr:,vid:,pid: -- "$@"); then
     echo "Terminating..." >&2
     exit 1
   fi
@@ -136,6 +141,18 @@ while true; do
       echo "Selected interface: $INTERFACE"
       shift 2
       ;;
+    -m | --mode)
+      MODE=$2
+      shift 2
+      ;;
+    -a | --address)
+      ADDRESS=$2
+      shift 2
+      ;;
+    -s | --start)
+      START=$2
+      shift 2
+      ;;
     -e | --erase)
       ERASE="--erase all"
       shift 1
@@ -146,7 +163,6 @@ while true; do
       ;;
     -o | --offset)
       OFFSET=$2
-      ADDRESS=$(printf "0x%x" $((ADDRESS + OFFSET)))
       shift 2
       ;;
     -c | --com)
@@ -180,6 +196,8 @@ while true; do
   esac
 done
 
+ADDRESS=$(printf "0x%x" $((ADDRESS + OFFSET)))
+
 # Check mandatory options
 if [ -z "${INTERFACE}" ]; then
   echo "Error missing interface!" >&2
@@ -196,14 +214,14 @@ fi
 
 case "${INTERFACE}" in
   swd)
-    ${STM32CP_CLI} --connect port=SWD mode=UR "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${ADDRESS}"
+    ${STM32CP_CLI} --connect port=SWD mode="${MODE}" "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${START}"
     ;;
   dfu)
     if [ -z "${VID}" ] || [ -z "${PID}" ]; then
       echo "Missing mandatory arguments for DFU mode (VID/PID)!" >&2
       exit 1
     fi
-    ${STM32CP_CLI} --connect port=usb1 VID="${VID}" PID="${PID}" "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${ADDRESS}"
+    ${STM32CP_CLI} --connect port=usb1 VID="${VID}" PID="${PID}" "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${START}"
     ;;
   serial)
     if [ -z "${PORT}" ]; then
@@ -222,10 +240,10 @@ case "${INTERFACE}" in
         exit 1
       fi
     fi
-    ${STM32CP_CLI} --connect port="${PORT}" "${RTS}" "${DTR}" "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${ADDRESS}"
+    ${STM32CP_CLI} --connect port="${PORT}" "${RTS}" "${DTR}" "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${START}"
     ;;
   jlink)
-    ${STM32CP_CLI} --connect port=JLINK ap=0 "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${ADDRESS}"
+    ${STM32CP_CLI} --connect port=JLINK ap=0 "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${START}"
     ;;
   *)
     echo "Protocol unknown!" >&2
