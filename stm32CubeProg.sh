@@ -17,6 +17,7 @@ ERASE=
 # Optional for Serial
 RTS=
 DTR=
+PARITY=EVEN
 # Mandatory for DFU
 VID=
 PID=
@@ -42,6 +43,7 @@ usage() {
     Optional:
       -r, --rts <low/high>                   polarity of RTS signal ('low' by default)
       -d, --dtr <low/high>                   polarity of DTR signal
+      --parity <none/even/odd>         parity bit configuration ('even' by default)
 
   Specific options for DFU protocol:
     Mandatory:
@@ -123,7 +125,7 @@ if [ -n "${GNU_GETOPT}" ]; then
     exit 1
   fi
 else
-  if ! options=$(getopt -a -o a:hi:m:ef:o:c:r:s:d:v:p: --long address:,help,interface:,mode:,erase,file:,start:,offset:,com:,rts:,dtr:,vid:,pid: -- "$@"); then
+  if ! options=$(getopt -a -o a:hi:m:ef:o:c:r:s:d:v:p: --long address:,help,interface:,mode:,erase,file:,start:,offset:,com:,rts:,dtr:,vid:,pid:,parity: -- "$@"); then
     echo "Terminating..." >&2
     exit 1
   fi
@@ -185,6 +187,10 @@ while true; do
       PID=$2
       shift 2
       ;;
+    --parity)
+      PARITY=$(echo "$2" | tr '[:lower:]' '[:upper:]')
+      shift 2
+      ;;
     --)
       shift
       break
@@ -240,7 +246,11 @@ case "${INTERFACE}" in
         exit 1
       fi
     fi
-    ${STM32CP_CLI} --connect port="${PORT}" "${RTS}" "${DTR}" "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${START}"
+    if [ "$PARITY" != "NONE" ] && [ "$PARITY" != "EVEN" ] && [ "$PARITY" != "ODD" ]; then
+      echo "Wrong parity value waiting none, even or odd instead of ${PARITY}" >&2
+      exit 1
+    fi
+    ${STM32CP_CLI} --connect port="${PORT}" P="${PARITY}" "${RTS}" "${DTR}" "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${START}"
     ;;
   jlink)
     ${STM32CP_CLI} --connect port=JLINK ap=0 "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${START}"
