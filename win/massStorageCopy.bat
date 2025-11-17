@@ -32,10 +32,9 @@ goto :eof
 
 :sub
 setlocal enabledelayedexpansion
-for /F "skip=1 tokens=*" %%a in ('WMIC LOGICALDISK where "volumename like '%~1'" get deviceid 2^>NUL') do if not defined id set id=%%a
-  call set "deviceid=%%id: =%%"
-  if not "%deviceid%" == "" (
-    %~dp0busybox.exe cp -f %SRC_PARSE% %deviceid%
-    if  !errorlevel! == 0 (echo Upload complete on %1 ^(%deviceid%^))
+for /F "delims=" %%a in ('powershell -nologo -command ^
+  "Get-CimInstance -ClassName 'Win32_LogicalDisk' -Filter 'DriveType = 2' | Where-Object { $_.VolumeName -eq '%~1' } | Select-Object -ExpandProperty DeviceID" 2^>NUL') do if not "%%a" == "" (
+    %~dp0busybox.exe cp -f %SRC_PARSE% %%a
+    if  !errorlevel! == 0 (echo Upload complete on %1 ^(%%a^))
     exit !errorlevel!)
 goto :eof
