@@ -16,7 +16,19 @@ UNAME_OS="$(uname -s)"
 case "${UNAME_OS}" in
   Linux*)
     dummy_port_fullpath="/dev/$1"
-    OS_DIR="linux"
+    UNAME_ARCH="$(uname -m)"
+    case "${UNAME_ARCH}" in
+      x86_64)
+        OS_DIR="linux"
+        ;;
+      aarch64|arm64)
+        OS_DIR="linux-arm64"
+        ;;
+      *)
+        echo "Unsupported Linux architecture: ${UNAME_ARCH}."
+        exit 1
+        ;;
+    esac
     ;;
   Darwin*)
     dummy_port_fullpath="/dev/$1"

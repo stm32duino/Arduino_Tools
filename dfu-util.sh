@@ -9,7 +9,19 @@ UNAME_OS="$(uname -s)"
 case "${UNAME_OS}" in
   Linux*)
     # Choose dfu program by arch
-    DFU_UTIL=${DIR}/linux/dfu-util
+    UNAME_ARCH="$(uname -m)"
+    case "${UNAME_ARCH}" in
+      x86_64)
+        DFU_UTIL=${DIR}/linux/dfu-util
+        ;;
+      aarch64|arm64)
+        DFU_UTIL=${DIR}/linux-arm64/dfu-util
+        ;;
+      *)
+        echo "Unsupported Linux architecture: ${UNAME_ARCH}."
+        exit 1
+        ;;
+    esac
     ;;
   Darwin*)
     DFU_UTIL=${DIR}/macosx/dfu-util
