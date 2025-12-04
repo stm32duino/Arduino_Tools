@@ -1,14 +1,14 @@
 #!/bin/bash
 #
 # Build script for ARM64 Linux binaries using Docker
-# This script builds all necessary binaries and copies them to linux-arm64/
+# This script builds all necessary binaries and copies them to linux/aarch64/
 #
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-OUTPUT_DIR="${SCRIPT_DIR}/.."
+OUTPUT_DIR="${REPO_ROOT}/linux/aarch64"
 
 echo "========================================"
 echo "Building ARM64 binaries using Docker"
@@ -72,16 +72,7 @@ chmod +x "${OUTPUT_DIR}/hid-flash"
 chmod +x "${OUTPUT_DIR}/upload_reset"
 
 echo ""
-echo "Step 7: Copying additional files from linux/ directory..."
-for file in 45-maple.rules 99-stm32_hid_bl.rules install.sh massStorageCopy.sh; do
-    if [ -f "${REPO_ROOT}/linux/${file}" ]; then
-        cp "${REPO_ROOT}/linux/${file}" "${OUTPUT_DIR}/"
-        echo "  Copied: ${file}"
-    fi
-done
-
-echo ""
-echo "Step 8: Verifying built binaries..."
+echo "Step 7: Verifying built binaries..."
 echo "----------------------------------------"
 file "${OUTPUT_DIR}/dfu-util"
 file "${OUTPUT_DIR}/dfu-prefix"

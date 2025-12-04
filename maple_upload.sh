@@ -19,10 +19,10 @@ case "${UNAME_OS}" in
     UNAME_ARCH="$(uname -m)"
     case "${UNAME_ARCH}" in
       x86_64)
-        OS_DIR="linux"
+        OS_DIR="linux/x86_64"
         ;;
       aarch64|arm64)
-        OS_DIR="linux-arm64"
+        OS_DIR="linux/aarch64"
         ;;
       *)
         echo "Unsupported Linux architecture: ${UNAME_ARCH}."

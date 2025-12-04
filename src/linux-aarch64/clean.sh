@@ -1,12 +1,13 @@
 #!/bin/bash
 #
-# Clean built ARM64 binaries from linux-arm64/
+# Clean built ARM64 binaries from linux/aarch64/
 #
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-OUTPUT_DIR="${SCRIPT_DIR}/.."
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+OUTPUT_DIR="${REPO_ROOT}/linux/aarch64"
 
 echo "=========================================="
 echo "Cleaning ARM64 Binaries"

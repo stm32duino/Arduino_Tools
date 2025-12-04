@@ -12,10 +12,10 @@ case "${UNAME_OS}" in
     UNAME_ARCH="$(uname -m)"
     case "${UNAME_ARCH}" in
       x86_64)
-        DFU_UTIL=${DIR}/linux/dfu-util
+        DFU_UTIL=${DIR}/linux/x86_64/dfu-util
         ;;
       aarch64|arm64)
-        DFU_UTIL=${DIR}/linux-arm64/dfu-util
+        DFU_UTIL=${DIR}/linux/aarch64/dfu-util
         ;;
       *)
         echo "Unsupported Linux architecture: ${UNAME_ARCH}."

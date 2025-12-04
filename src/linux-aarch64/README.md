@@ -22,7 +22,7 @@ These scripts use Docker to cross-compile the following binaries from x86_64 to 
 From the repository root directory:
 
 ```bash
-./linux-arm64/scripts/build.sh
+./src/linux-aarch64/build.sh
 ```
 
 This will:
@@ -30,11 +30,10 @@ This will:
 1. Build and run ARM64 test stage (validates binaries work via QEMU on x86_64)
 2. Build Docker image with the ARM64 cross-compilation toolchain
 3. Compile all required binaries for ARM64
-4. Extract the binaries to `linux-arm64/`
+4. Extract the binaries to `linux/aarch64/`
 5. Set executable permissions
-6. Copy additional files (udev rules, helper scripts)
-7. Verify binary architecture
-8. Clean up the Docker container
+6. Verify binary architecture
+7. Clean up the Docker container
 
 ## Build Script Details
 
@@ -51,14 +50,13 @@ Main build orchestration script that performs the complete build and test workfl
    - Ensures binaries actually execute correctly
    - Build fails if any binary doesn't work
 3. **Builds export stage** - Uses `docker build` to create final image
-4. **Extracts binaries** - Copies binaries from container to `linux-arm64/`
+4. **Extracts binaries** - Copies binaries from container to `linux/aarch64/`
 5. **Sets permissions** - Makes all binaries executable
-6. **Copies additional files** - Copies udev rules and helper scripts from `linux/`
-7. **Verifies output** - Runs `file` command to confirm ARM64 architecture
+6. **Verifies output** - Runs `file` command to confirm ARM64 architecture
 
 ### `clean.sh`
 
-Removes all built ARM64 binaries from the `linux-arm64/` directory.
+Removes all built ARM64 binaries from the `linux/aarch64/` directory.
 
 ### `Dockerfile`
 
