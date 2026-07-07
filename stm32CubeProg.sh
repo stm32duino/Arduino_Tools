@@ -125,7 +125,7 @@ if [ -n "${GNU_GETOPT}" ]; then
     exit 1
   fi
 else
-  if ! options=$(getopt -a -o a:hi:m:ef:o:c:r:s:d:v:p: --long address:,help,interface:,mode:,erase,file:,start:,offset:,com:,rts:,dtr:,vid:,pid:,parity: -- "$@"); then
+  if ! options=$(getopt -a -o a:hi:m:ef:o:c:r:s:d:v:p:n: --long address:,help,interface:,mode:,erase,file:,start:,offset:,com:,rts:,dtr:,vid:,pid:,parity:,serial_number: -- "$@"); then
     echo "Terminating..." >&2
     exit 1
   fi
@@ -135,6 +135,10 @@ eval set -- "$options"
 
 while true; do
   case "$1" in
+      -n | --serial-number)
+      SERIAL_NUMBER="$2"
+      shift 2
+      ;;
     -h | --help | -\?)
       usage 0
       ;;
@@ -220,7 +224,11 @@ fi
 
 case "${INTERFACE}" in
   swd)
-    ${STM32CP_CLI} --connect port=SWD mode="${MODE}" "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${START}"
+      PORT_PARAM="port=SWD"
+    if [ -n "${SERIAL_NUMBER}" ]; then
+      PORT_PARAM="port=SWD sn=${SERIAL_NUMBER}"
+    fi
+    ${STM32CP_CLI} --connect ${PORT_PARAM} ${MODE} "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${START}"
     ;;
   dfu)
     if [ -z "${VID}" ] || [ -z "${PID}" ]; then
