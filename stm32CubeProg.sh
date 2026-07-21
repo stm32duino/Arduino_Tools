@@ -120,7 +120,7 @@ esac
 # parse command line arguments
 # options may be followed by one colon to indicate they have a required arg
 if [ -n "${GNU_GETOPT}" ]; then
-  if ! options=$(getopt hi:ef:o:c:r:d:v:p: "$@"); then
+  if ! options=$(getopt a:hi:m:ef:o:c:r:s:d:v:p: "$@"); then
     echo "Terminating..." >&2
     exit 1
   fi
