@@ -29,7 +29,7 @@ usage() {
 
   Mandatory options:
     -i, --interface <'swd'/'dfu'/'serial'/'jlink'>   interface identifier: 'swd', 'dfu', 'serial' or 'jlink'
-    -f, --file <path>                        file path to be downloaded: bin or hex
+    -b, --bin <file_path>                    binary file path to be downloaded: bin or hex
   Optional options:
     -a, --address <hex value>                flash base address. Default: $ADDRESS
     -e, --erase                              erase all sectors before flashing
@@ -120,12 +120,12 @@ esac
 # parse command line arguments
 # options may be followed by one colon to indicate they have a required arg
 if [ -n "${GNU_GETOPT}" ]; then
-  if ! options=$(getopt a:hi:m:ef:o:c:r:s:d:v:p: "$@"); then
+  if ! options=$(getopt a:b:hi:m:e:o:c:r:s:d:v:p: "$@"); then
     echo "Terminating..." >&2
     exit 1
   fi
 else
-  if ! options=$(getopt -a -o a:hi:m:ef:o:c:r:s:d:v:p: --long address:,help,interface:,mode:,erase,file:,start:,offset:,com:,rts:,dtr:,vid:,pid:,parity: -- "$@"); then
+  if ! options=$(getopt -a -o a:b:hi:m:e:o:c:r:s:d:v:p: --long address:,bin:,help,interface:,mode:,erase,start:,offset:,com:,rts:,dtr:,vid:,pid:,parity: -- "$@"); then
     echo "Terminating..." >&2
     exit 1
   fi
@@ -159,7 +159,7 @@ while true; do
       ERASE="--erase all"
       shift 1
       ;;
-    -f | --file)
+    -b | --bin)
       FILEPATH=$2
       shift 2
       ;;
@@ -207,7 +207,7 @@ if [ -z "${INTERFACE}" ]; then
   usage 1
 fi
 if [ -z "${FILEPATH}" ]; then
-  echo "Error missing file argmument!" >&2
+  echo "Error missing binary file argument!" >&2
   usage 1
 fi
 if [ ! -r "${FILEPATH}" ]; then
