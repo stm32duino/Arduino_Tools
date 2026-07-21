@@ -14,6 +14,7 @@ ADDRESS=0x8000000
 START=0x8000000
 ERASE=
 # Optional for SWD
+FREQ=
 MODE=UR
 # Optional for Serial
 RTS=
@@ -39,6 +40,7 @@ usage() {
 
   Specific options for SWD protocol:
     Optional:
+      -f, --freq <value>                     SWD frequency in KHz.
       -m, --mode                             connection mode: UR (default), HOTPLUG, POWERDOWN or hwRstPulse
 
   Specific options for Serial protocol:
@@ -124,12 +126,12 @@ esac
 # parse command line arguments
 # options may be followed by one colon to indicate they have a required arg
 if [ -n "${GNU_GETOPT}" ]; then
-  if ! options=$(getopt hi:b:a:es:o:m:c:d:p:r:v: "$@"); then
+  if ! options=$(getopt hi:b:a:es:o:f:m:c:d:p:r:v: "$@"); then
     echo "Terminating..." >&2
     exit 1
   fi
 else
-  if ! options=$(getopt -a -o hi:b:a:es:o:m:c:d:p:r:v: --long help,interface:,bin:,address:,erase,start:,offset:,mode:,com:,dtr:,parity:,rts:,pid:,vid: -- "$@"); then
+  if ! options=$(getopt -a -o hi:b:a:es:o:f:m:c:d:p:r:v: --long help,interface:,bin:,address:,erase,start:,offset:,freq:,mode:,com:,dtr:,parity:,rts:,pid:,vid: -- "$@"); then
     echo "Terminating..." >&2
     exit 1
   fi
@@ -165,6 +167,10 @@ while true; do
       ;;
     -o | --offset)
       OFFSET=$2
+      shift 2
+      ;;
+    -f | --freq)
+      FREQ=$2
       shift 2
       ;;
     -m | --mode)
@@ -221,7 +227,20 @@ fi
 
 case "${INTERFACE}" in
   swd)
-    ${STM32CP_CLI} --connect port=SWD mode="${MODE}" "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${START}"
+    PORT_PARAM="port=SWD"
+    if [ -n "${FREQ}" ]; then
+      case "${FREQ}" in
+        0) ;;
+        *[!0-9]*)
+          echo "Invalid SWD frequency (expected integer KHz): ${FREQ}" >&2
+          exit 1
+          ;;
+        *)
+          PORT_PARAM="${PORT_PARAM} freq=${FREQ}"
+          ;;
+      esac
+    fi
+    ${STM32CP_CLI} --connect "${PORT_PARAM}" mode="${MODE}" "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${START}"
     ;;
   dfu)
     if [ -z "${VID}" ] || [ -z "${PID}" ]; then
