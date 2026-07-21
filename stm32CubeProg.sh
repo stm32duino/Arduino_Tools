@@ -16,6 +16,7 @@ ERASE=
 # Optional for SWD
 FREQ=
 MODE=UR
+SERIAL_NUMBER=
 # Optional for Serial
 RTS=
 DTR=
@@ -42,7 +43,7 @@ usage() {
     Optional:
       -f, --freq <value>                     SWD frequency in KHz.
       -m, --mode                             connection mode: UR (default), HOTPLUG, POWERDOWN or hwRstPulse
-
+      -n, --snum <serial number>             serial number of the ST-Link device (if multiple ST-Link devices are connected)
   Specific options for Serial protocol:
     Mandatory:
       -c, --com <name>                       serial identifier, ex: COM1 or /dev/ttyS0,...
@@ -126,12 +127,12 @@ esac
 # parse command line arguments
 # options may be followed by one colon to indicate they have a required arg
 if [ -n "${GNU_GETOPT}" ]; then
-  if ! options=$(getopt hi:b:a:es:o:f:m:c:d:p:r:v: "$@"); then
+  if ! options=$(getopt hi:b:a:es:o:f:m:n:c:d:p:r:v: "$@"); then
     echo "Terminating..." >&2
     exit 1
   fi
 else
-  if ! options=$(getopt -a -o hi:b:a:es:o:f:m:c:d:p:r:v: --long help,interface:,bin:,address:,erase,start:,offset:,freq:,mode:,com:,dtr:,parity:,rts:,pid:,vid: -- "$@"); then
+  if ! options=$(getopt -a -o hi:b:a:es:o:f:m:n:c:d:p:r:v: --long help,interface:,bin:,address:,erase,start:,offset:,freq:,mode:,snum:,com:,dtr:,parity:,rts:,pid:,vid: -- "$@"); then
     echo "Terminating..." >&2
     exit 1
   fi
@@ -175,6 +176,10 @@ while true; do
       ;;
     -m | --mode)
       MODE=$2
+      shift 2
+      ;;
+    -n | --snum)
+      SERIAL_NUMBER="$2"
       shift 2
       ;;
     -c | --com)
@@ -239,6 +244,9 @@ case "${INTERFACE}" in
           PORT_PARAM="${PORT_PARAM} freq=${FREQ}"
           ;;
       esac
+    fi
+    if [ -n "${SERIAL_NUMBER}" ] && [ "${SERIAL_NUMBER}" != "0" ]; then
+      PORT_PARAM="${PORT_PARAM} sn=${SERIAL_NUMBER}"
     fi
     ${STM32CP_CLI} --connect "${PORT_PARAM}" mode="${MODE}" "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${START}"
     ;;
