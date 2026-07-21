@@ -43,7 +43,7 @@ usage() {
     Optional:
       -r, --rts <low/high>                   polarity of RTS signal ('low' by default)
       -d, --dtr <low/high>                   polarity of DTR signal
-      --parity <none/even/odd>         parity bit configuration ('even' by default)
+      -p, --parity <none/even/odd>           parity bit configuration ('even' by default)
 
   Specific options for DFU protocol:
     Mandatory:
@@ -183,11 +183,8 @@ while true; do
       VID=$2
       shift 2
       ;;
-    -p | --pid)
+    -p | --pid | --parity)
       PID=$2
-      shift 2
-      ;;
-    --parity)
       PARITY=$(echo "$2" | tr '[:lower:]' '[:upper:]')
       shift 2
       ;;
