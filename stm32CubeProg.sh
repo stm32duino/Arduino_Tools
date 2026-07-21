@@ -12,8 +12,11 @@ OFFSET=0x0
 # Optional
 ADDRESS=0x8000000
 START=0x8000000
-MODE=UR
 ERASE=
+# Optional for SWD
+FREQ=
+MODE=UR
+SERIAL_NUMBER=
 # Optional for Serial
 RTS=
 DTR=
@@ -29,23 +32,27 @@ usage() {
 
   Mandatory options:
     -i, --interface <'swd'/'dfu'/'serial'/'jlink'>   interface identifier: 'swd', 'dfu', 'serial' or 'jlink'
-    -f, --file <path>                        file path to be downloaded: bin or hex
+    -b, --bin <file_path>                    binary file path to be downloaded: bin or hex
   Optional options:
     -a, --address <hex value>                flash base address. Default: $ADDRESS
     -e, --erase                              erase all sectors before flashing
-    -m, --mode                               connection mode: UR (default), HOTPLUG, POWERDOWN or hwRstPulse
     -s, --start <hex value>                  start address after flashing. Default: $START
     -o, --offset <hex value>                 offset from flash base ($ADDRESS) where flashing should start
 
+  Specific options for SWD protocol:
+    Optional:
+      -f, --freq <value>                     SWD frequency in KHz.
+      -m, --mode                             connection mode: UR (default), HOTPLUG, POWERDOWN or hwRstPulse
+      -n, --snum <serial number>             serial number of the ST-Link device (if multiple ST-Link devices are connected)
   Specific options for Serial protocol:
     Mandatory:
-    -c, --com <name>                         serial identifier, ex: COM1 or /dev/ttyS0,...
+      -c, --com <name>                       serial identifier, ex: COM1 or /dev/ttyS0,...
     Optional:
-      -r, --rts <low/high>                   polarity of RTS signal ('low' by default)
       -d, --dtr <low/high>                   polarity of DTR signal
       -p, --parity <none/even/odd>           parity bit configuration ('even' by default)
+      -r, --rts <low/high>                   polarity of RTS signal ('low' by default)
 
-  Specific options for DFU protocol:
+   Specific options for DFU protocol:
     Mandatory:
       -v, --vid <hex value>                  vendor id, ex: 0x0483
       -p, --pid <hex value>                  product id, ex: 0xdf11
@@ -120,12 +127,12 @@ esac
 # parse command line arguments
 # options may be followed by one colon to indicate they have a required arg
 if [ -n "${GNU_GETOPT}" ]; then
-  if ! options=$(getopt a:hi:m:ef:o:c:r:s:d:v:p: "$@"); then
+  if ! options=$(getopt hi:b:a:es:o:f:m:n:c:d:p:r:v: "$@"); then
     echo "Terminating..." >&2
     exit 1
   fi
 else
-  if ! options=$(getopt -a -o a:hi:m:ef:o:c:r:s:d:v:p: --long address:,help,interface:,mode:,erase,file:,start:,offset:,com:,rts:,dtr:,vid:,pid:,parity: -- "$@"); then
+  if ! options=$(getopt -a -o hi:b:a:es:o:f:m:n:c:d:p:r:v: --long help,interface:,bin:,address:,erase,start:,offset:,freq:,mode:,snum:,com:,dtr:,parity:,rts:,pid:,vid: -- "$@"); then
     echo "Terminating..." >&2
     exit 1
   fi
@@ -143,49 +150,57 @@ while true; do
       echo "Selected interface: $INTERFACE"
       shift 2
       ;;
-    -m | --mode)
-      MODE=$2
+    -b | --bin)
+      FILEPATH=$2
       shift 2
       ;;
     -a | --address)
       ADDRESS=$2
       shift 2
       ;;
-    -s | --start)
-      START=$2
-      shift 2
-      ;;
     -e | --erase)
       ERASE="--erase all"
       shift 1
       ;;
-    -f | --file)
-      FILEPATH=$2
+    -s | --start)
+      START=$2
       shift 2
       ;;
     -o | --offset)
       OFFSET=$2
       shift 2
       ;;
-    -c | --com)
-      PORT=$2
+    -f | --freq)
+      FREQ=$2
       shift 2
       ;;
-    -r | --rts)
-      RTS=$(echo "rts=$2" | tr '[:upper:]' '[:lower:]')
+    -m | --mode)
+      MODE=$2
+      shift 2
+      ;;
+    -n | --snum)
+      SERIAL_NUMBER="$2"
+      shift 2
+      ;;
+    -c | --com)
+      PORT=$2
       shift 2
       ;;
     -d | --dtr)
       DTR=$(echo "dtr=$2" | tr '[:upper:]' '[:lower:]')
       shift 2
       ;;
-    -v | --vid)
-      VID=$2
-      shift 2
-      ;;
     -p | --pid | --parity)
       PID=$2
       PARITY=$(echo "$2" | tr '[:lower:]' '[:upper:]')
+      shift 2
+      ;;
+    -r | --rts)
+      RTS=$(echo "rts=$2" | tr '[:upper:]' '[:lower:]')
+      shift 2
+      ;;
+    -v | --vid)
+      VID=$2
       shift 2
       ;;
     --)
@@ -207,7 +222,7 @@ if [ -z "${INTERFACE}" ]; then
   usage 1
 fi
 if [ -z "${FILEPATH}" ]; then
-  echo "Error missing file argmument!" >&2
+  echo "Error missing binary file argument!" >&2
   usage 1
 fi
 if [ ! -r "${FILEPATH}" ]; then
@@ -217,7 +232,23 @@ fi
 
 case "${INTERFACE}" in
   swd)
-    ${STM32CP_CLI} --connect port=SWD mode="${MODE}" "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${START}"
+    PORT_PARAM="port=SWD"
+    if [ -n "${FREQ}" ]; then
+      case "${FREQ}" in
+        0) ;;
+        *[!0-9]*)
+          echo "Invalid SWD frequency (expected integer KHz): ${FREQ}" >&2
+          exit 1
+          ;;
+        *)
+          PORT_PARAM="${PORT_PARAM} freq=${FREQ}"
+          ;;
+      esac
+    fi
+    if [ -n "${SERIAL_NUMBER}" ] && [ "${SERIAL_NUMBER}" != "0" ]; then
+      PORT_PARAM="${PORT_PARAM} sn=${SERIAL_NUMBER}"
+    fi
+    ${STM32CP_CLI} --connect "${PORT_PARAM}" mode="${MODE}" "${ERASE}" --quietMode --download "${FILEPATH}" "${ADDRESS}" --start "${START}"
     ;;
   dfu)
     if [ -z "${VID}" ] || [ -z "${PID}" ]; then
