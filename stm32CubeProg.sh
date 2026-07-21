@@ -12,8 +12,9 @@ OFFSET=0x0
 # Optional
 ADDRESS=0x8000000
 START=0x8000000
-MODE=UR
 ERASE=
+# Optional for SWD
+MODE=UR
 # Optional for Serial
 RTS=
 DTR=
@@ -33,19 +34,22 @@ usage() {
   Optional options:
     -a, --address <hex value>                flash base address. Default: $ADDRESS
     -e, --erase                              erase all sectors before flashing
-    -m, --mode                               connection mode: UR (default), HOTPLUG, POWERDOWN or hwRstPulse
     -s, --start <hex value>                  start address after flashing. Default: $START
     -o, --offset <hex value>                 offset from flash base ($ADDRESS) where flashing should start
 
+  Specific options for SWD protocol:
+    Optional:
+      -m, --mode                             connection mode: UR (default), HOTPLUG, POWERDOWN or hwRstPulse
+
   Specific options for Serial protocol:
     Mandatory:
-    -c, --com <name>                         serial identifier, ex: COM1 or /dev/ttyS0,...
+      -c, --com <name>                       serial identifier, ex: COM1 or /dev/ttyS0,...
     Optional:
-      -r, --rts <low/high>                   polarity of RTS signal ('low' by default)
       -d, --dtr <low/high>                   polarity of DTR signal
       -p, --parity <none/even/odd>           parity bit configuration ('even' by default)
+      -r, --rts <low/high>                   polarity of RTS signal ('low' by default)
 
-  Specific options for DFU protocol:
+   Specific options for DFU protocol:
     Mandatory:
       -v, --vid <hex value>                  vendor id, ex: 0x0483
       -p, --pid <hex value>                  product id, ex: 0xdf11
@@ -120,12 +124,12 @@ esac
 # parse command line arguments
 # options may be followed by one colon to indicate they have a required arg
 if [ -n "${GNU_GETOPT}" ]; then
-  if ! options=$(getopt a:b:hi:m:e:o:c:r:s:d:v:p: "$@"); then
+  if ! options=$(getopt hi:b:a:es:o:m:c:d:p:r:v: "$@"); then
     echo "Terminating..." >&2
     exit 1
   fi
 else
-  if ! options=$(getopt -a -o a:b:hi:m:e:o:c:r:s:d:v:p: --long address:,bin:,help,interface:,mode:,erase,start:,offset:,com:,rts:,dtr:,vid:,pid:,parity: -- "$@"); then
+  if ! options=$(getopt -a -o hi:b:a:es:o:m:c:d:p:r:v: --long help,interface:,bin:,address:,erase,start:,offset:,mode:,com:,dtr:,parity:,rts:,pid:,vid: -- "$@"); then
     echo "Terminating..." >&2
     exit 1
   fi
@@ -143,49 +147,49 @@ while true; do
       echo "Selected interface: $INTERFACE"
       shift 2
       ;;
-    -m | --mode)
-      MODE=$2
+    -b | --bin)
+      FILEPATH=$2
       shift 2
       ;;
     -a | --address)
       ADDRESS=$2
       shift 2
       ;;
-    -s | --start)
-      START=$2
-      shift 2
-      ;;
     -e | --erase)
       ERASE="--erase all"
       shift 1
       ;;
-    -b | --bin)
-      FILEPATH=$2
+    -s | --start)
+      START=$2
       shift 2
       ;;
     -o | --offset)
       OFFSET=$2
       shift 2
       ;;
-    -c | --com)
-      PORT=$2
+    -m | --mode)
+      MODE=$2
       shift 2
       ;;
-    -r | --rts)
-      RTS=$(echo "rts=$2" | tr '[:upper:]' '[:lower:]')
+    -c | --com)
+      PORT=$2
       shift 2
       ;;
     -d | --dtr)
       DTR=$(echo "dtr=$2" | tr '[:upper:]' '[:lower:]')
       shift 2
       ;;
-    -v | --vid)
-      VID=$2
-      shift 2
-      ;;
     -p | --pid | --parity)
       PID=$2
       PARITY=$(echo "$2" | tr '[:lower:]' '[:upper:]')
+      shift 2
+      ;;
+    -r | --rts)
+      RTS=$(echo "rts=$2" | tr '[:upper:]' '[:lower:]')
+      shift 2
+      ;;
+    -v | --vid)
+      VID=$2
       shift 2
       ;;
     --)
