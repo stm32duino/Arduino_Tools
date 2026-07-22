@@ -131,7 +131,32 @@ check_getopt() {
   esac
 }
 
+# Qt in STM32CubeProgrammer expects a UTF-8 locale on Linux/macOS.
+ensure_utf8_locale() {
+  case "${UNAME_OS}" in
+    Linux* | Darwin*)
+      if command -v locale >/dev/null 2>&1; then
+        CHARMAP=$(LC_ALL='' LANG='' locale charmap 2>/dev/null || true)
+        case "${CHARMAP}" in
+          UTF-8 | utf8) ;;
+          *)
+            LOCALES_RES=$(locale -a 2>/dev/null || true)
+            if printf '%s\n' "${LOCALES_RES}" | grep -qi '^C\.UTF-8$'; then
+              export LANG=C.UTF-8
+              export LC_ALL=C.UTF-8
+            elif printf '%s\n' "${LOCALES_RES}" | grep -qiE '^en_US\.(UTF-8|utf8)$'; then
+              export LANG=en_US.UTF-8
+              export LC_ALL=en_US.UTF-8
+            fi
+            ;;
+        esac
+      fi
+      ;;
+  esac
+}
+
 check_getopt
+ensure_utf8_locale
 
 # Check STM32CubeProgrammer cli availability
 case "${UNAME_OS}" in
