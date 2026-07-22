@@ -3,7 +3,7 @@ set -o nounset # Treat unset variables as an error
 # set -o xtrace  # Print command traces before executing command.
 
 UNAME_OS="$(uname -s)"
-GNU_GETOPT=
+GNU_GETOPT="n" # "y" if GNU getopt is available
 STM32CP_CLI=
 INTERFACE=
 PORT=
@@ -69,7 +69,71 @@ aborting() {
   exit 1
 }
 
-# Check STM32CubeProgrammer cli availability and getopt version
+check_getopt() {
+  case "${UNAME_OS}" in
+    Linux* | Windows*)
+      GNU_GETOPT="y"
+      ;;
+    Darwin*)
+      # Check if getopt is in the path and if it is gnu or BSD version in the path
+      if command -v getopt >/dev/null 2>&1; then
+        getopt --test >/dev/null 2>&1
+        if [ $? -eq 4 ]; then
+          GNU_GETOPT="y"
+        fi
+      fi
+      # If getopt is not gnu version, check if it is installed via brew
+      if [ "${GNU_GETOPT}" != "y" ]; then
+        if command -v brew >/dev/null 2>&1; then
+          BREW_PREFIX=$(brew --prefix)
+          if command -v "${BREW_PREFIX}/bin/getopt" >/dev/null 2>&1; then
+            "${BREW_PREFIX}"/bin/getopt --test >/dev/null 2>&1
+            if [ $? -eq 4 ]; then
+              export PATH="${BREW_PREFIX}/bin:$PATH"
+              GNU_GETOPT="y"
+            fi
+          fi
+          if [ "${GNU_GETOPT}" != "y" ]; then
+            if command -v "${BREW_PREFIX}/opt/gnu-getopt/bin/getopt" >/dev/null 2>&1; then
+              export PATH="${BREW_PREFIX}/opt/gnu-getopt/bin":"$PATH"
+              GNU_GETOPT="y"
+            fi
+          fi
+        fi
+        # Check for MacPorts getopt
+        if [ "${GNU_GETOPT}" != "y" ]; then
+          if command -v /opt/local/bin/getopt >/dev/null 2>&1; then
+            /opt/local/bin/getopt --test >/dev/null 2>&1
+            if [ $? -eq 4 ]; then
+              export PATH="/opt/local/bin:$PATH"
+              GNU_GETOPT="y"
+            fi
+          fi
+        fi
+        # Fallback to previous check
+        if [ "${GNU_GETOPT}" != "y" ]; then
+          if ! command -v /usr/local/opt/gnu-getopt/bin/getopt >/dev/null 2>&1; then
+            if command -v /opt/homebrew/opt/gnu-getopt/bin/getopt >/dev/null 2>&1; then
+              export PATH="/opt/homebrew/opt/gnu-getopt/bin":"$PATH"
+              GNU_GETOPT="y"
+            fi
+          else
+            export PATH="/usr/local/opt/gnu-getopt/bin":"$PATH"
+            GNU_GETOPT="y"
+          fi
+        fi
+      fi
+      ;;
+    *)
+      echo "Unknown host OS: ${UNAME_OS}." >&2
+      exit 1
+      ;;
+  esac
+}
+
+check_getopt
+
+# Check STM32CubeProgrammer cli availability
 case "${UNAME_OS}" in
   Linux*)
     STM32CP_CLI=STM32_Programmer.sh
@@ -90,16 +154,6 @@ case "${UNAME_OS}" in
     fi
     if ! command -v $STM32CP_CLI >/dev/null 2>&1; then
       aborting
-    fi
-    if ! command -v /usr/local/opt/gnu-getopt/bin/getopt >/dev/null 2>&1; then
-      if ! command -v /opt/homebrew/opt/gnu-getopt/bin/getopt >/dev/null 2>&1; then
-        echo "Warning: long options not supported due to getopt from FreeBSD usage."
-        GNU_GETOPT=n
-      else
-        export PATH="/opt/homebrew/opt/gnu-getopt/bin":"$PATH"
-      fi
-    else
-      export PATH="/usr/local/opt/gnu-getopt/bin":"$PATH"
     fi
     ;;
   Windows*)
@@ -126,13 +180,15 @@ esac
 
 # parse command line arguments
 # options may be followed by one colon to indicate they have a required arg
-if [ -n "${GNU_GETOPT}" ]; then
-  if ! options=$(getopt hi:b:a:es:o:f:m:n:c:d:p:r:v: "$@"); then
+if [ "${GNU_GETOPT}" = "y" ]; then
+  if ! options=$(getopt -a -o hi:b:a:es:o:f:m:n:c:d:p:r:v: --long help,interface:,bin:,address:,erase,start:,offset:,freq:,mode:,snum:,com:,dtr:,parity:,rts:,pid:,vid: -- "$@"); then
     echo "Terminating..." >&2
     exit 1
   fi
 else
-  if ! options=$(getopt -a -o hi:b:a:es:o:f:m:n:c:d:p:r:v: --long help,interface:,bin:,address:,erase,start:,offset:,freq:,mode:,snum:,com:,dtr:,parity:,rts:,pid:,vid: -- "$@"); then
+  echo "Warning: long options not supported due to getopt from FreeBSD usage."
+  echo "         Space in arguments is not supported."
+  if ! options=$(getopt hi:b:a:es:o:f:m:n:c:d:p:r:v: "$@"); then
     echo "Terminating..." >&2
     exit 1
   fi
