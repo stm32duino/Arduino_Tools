@@ -281,19 +281,29 @@ bool touch_serial(const std::string &port)
 
   DCB dcb{};
   dcb.DCBlength = sizeof(dcb);
-  bool sent = GetCommState(handle, &dcb) != 0;
-  if (sent) {
-    dcb.BaudRate = CBR_1200;
-    dcb.fBinary = TRUE;
-    sent = SetCommState(handle, &dcb) != 0;
+  if (GetCommState(handle, &dcb) == 0) {
+    const DWORD error = GetLastError();
+    CloseHandle(handle);
+    std::cerr << "Unable to read serial settings from " << port << " (Windows error " << error << ").\n";
+    return false;
   }
+
+  dcb.BaudRate = CBR_1200;
+  dcb.fBinary = TRUE;
+  const bool applied = SetCommState(handle, &dcb) != 0;
+  const DWORD error = applied ? ERROR_SUCCESS : GetLastError();
   CloseHandle(handle);
 
-  /* Some USB CDC drivers report a disconnect because the device resets as
-   * soon as it processes SET_LINE_CODING. The later volume wait is the
-   * authoritative result, so continue in that situation.  Avoid reporting
-   * the transient Windows error here: a missing bootloader volume below is
-   * the actionable upload failure. */
+  if (applied) {
+    std::cout << "1200-bps line coding applied; waiting for the bootloader.\n";
+    return true;
+  }
+
+  /* A CDC device may reset while Windows is completing SET_LINE_CODING.  The
+   * bootloader-volume wait below decides whether that request still reached
+   * the application, but the error must stay visible for diagnosis. */
+  std::cout << "1200-bps line coding returned Windows error " << error
+            << "; the device may have reset during the request. Waiting for the bootloader.\n";
   return true;
 }
 
