@@ -21,6 +21,7 @@ BINARIES=(
     "dfu-suffix"
     "hid-flash"
     "upload_reset"
+    "uf2upload"
 )
 
 echo "Output directory: ${OUTPUT_DIR}"
