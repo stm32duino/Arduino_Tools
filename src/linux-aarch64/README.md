@@ -11,6 +11,7 @@ These scripts use Docker to cross-compile the following binaries from x86_64 to 
 - **dfu-suffix** - DFU file suffix tool
 - **hid-flash** - HID bootloader flash utility
 - **upload_reset** - STM32 reset utility
+- **uf2upload** - CDC 1200-bps touch and UF2 mass-storage uploader
 
 ## Prerequisites
 
@@ -61,3 +62,17 @@ Removes all built ARM64 binaries from the `linux/aarch64/` directory.
 ### `Dockerfile`
 
 Multi-stage Docker build with integrated testing.
+
+## Build only `uf2upload`
+
+For a local cross-build of just the UF2 uploader, install an AArch64 GNU C++
+cross-compiler and run:
+
+```bash
+make -C src/uf2upload aarch64
+file linux/aarch64/uf2upload
+```
+
+The resulting executable is for a Linux ARM64/AArch64 host, not for the STM32
+target. See [LOCAL_VALIDATION.md](LOCAL_VALIDATION.md) for local cross-build and
+QEMU validation steps, including their limitations.

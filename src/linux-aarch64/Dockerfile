@@ -1,5 +1,5 @@
 # Dockerfile for cross-compiling ARM64 Linux binaries
-# This builds dfu-util, hid-flash, and upload_reset for aarch64
+# This builds the STM32 host tools, including uf2upload, for Linux aarch64.
 
 FROM ubuntu:22.04
 

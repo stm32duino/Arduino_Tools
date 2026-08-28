@@ -20,3 +20,14 @@ uf2upload --input firmware.bin --port COM7 --volume XIAOC5BOOT \
 Use `--skip-touch` to disable the CDC touch when no bootloader volume is
 currently mounted. The source is built for the host package with
 `make -C src/uf2upload`.
+
+Linux ARM64/AArch64 builds are provided under `linux/aarch64/uf2upload`.
+From an x86_64 Linux host, they can be rebuilt with:
+
+```
+make -C src/uf2upload aarch64
+```
+
+The ARM64 build is cross-compiled; see
+[`src/linux-aarch64/LOCAL_VALIDATION.md`](src/linux-aarch64/LOCAL_VALIDATION.md)
+for QEMU-based validation and its limitations.
