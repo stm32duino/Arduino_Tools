@@ -170,3 +170,14 @@ clang \
   -Werror \
   -o "${ARCH_DIR}/upload_reset" \
   src/upload_reset/unix/upload_reset.c
+
+clang++ \
+  ${CC_ARCH_ARG} \
+  ${CC_MIN_OS_VERSION_ARG} \
+  ${BASE_CFLAGS} \
+  ${BASE_LDFLAGS} \
+  -std=c++17 \
+  -Wall \
+  -Werror \
+  -o "${ARCH_DIR}/uf2upload" \
+  src/uf2upload/uf2upload.cpp

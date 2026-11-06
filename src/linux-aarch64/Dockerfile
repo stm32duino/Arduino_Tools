@@ -1,5 +1,5 @@
 # Dockerfile for cross-compiling ARM64 Linux binaries
-# This builds dfu-util, hid-flash, and upload_reset for aarch64
+# This builds the STM32 host tools, including uf2upload, for Linux aarch64.
 
 FROM ubuntu:22.04
 
@@ -57,10 +57,13 @@ RUN git clone https://github.com/Serasidis/STM32_HID_Bootloader.git && \
     ${STRIP} hid-flash && \
     cp hid-flash /build/output/bin/
 
-# Build upload_reset from source
+# Build upload_reset and UF2 uploader from source
 COPY src/upload_reset/unix/upload_reset.c /build/upload_reset.c
+COPY src/uf2upload/uf2upload.cpp /build/uf2upload.cpp
 RUN ${CC} -o /build/output/bin/upload_reset /build/upload_reset.c && \
-    ${STRIP} /build/output/bin/upload_reset
+    ${STRIP} /build/output/bin/upload_reset && \
+    ${CXX} -O2 -std=c++17 -Wall -Wextra -Werror -o /build/output/bin/uf2upload /build/uf2upload.cpp && \
+    ${STRIP} /build/output/bin/uf2upload
 
 # Create output directory structure
 RUN mkdir -p /output
@@ -70,7 +73,8 @@ RUN cp /build/output/bin/dfu-util /output/ && \
     cp /build/output/bin/dfu-prefix /output/ && \
     cp /build/output/bin/dfu-suffix /output/ && \
     cp /build/output/bin/hid-flash /output/ && \
-    cp /build/output/bin/upload_reset /output/
+    cp /build/output/bin/upload_reset /output/ && \
+    cp /build/output/bin/uf2upload /output/
 
 # Verify binaries are ARM64
 RUN file /output/* | grep aarch64
@@ -128,6 +132,10 @@ RUN echo "========================================" && \
     echo "=== Testing upload_reset ===" && \
     file /usr/local/bin/upload_reset && \
     (upload_reset --help 2>&1 | head -5 || echo "(upload_reset executed successfully)") && \
+    echo "" && \
+    echo "=== Testing uf2upload ===" && \
+    file /usr/local/bin/uf2upload && \
+    uf2upload --help && \
     echo "" && \
     echo "========================================" && \
     echo "✓ All ARM64 binaries are working!" && \

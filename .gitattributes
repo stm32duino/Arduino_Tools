@@ -47,6 +47,8 @@ dfu-suffix binary
 dfu-util binary
 upload-reset binary
 hid-flash binary
+uf2upload binary
+uf2upload.exe binary
 *.class binary
 *.dll binary
 *.exe binary
@@ -54,4 +56,3 @@ hid-flash binary
 *.jpg binary
 *.pdf binary
 *.png binary
-

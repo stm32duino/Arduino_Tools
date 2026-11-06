@@ -4,6 +4,7 @@ This files includes licensing information for parts of this repository.
 * [busybox-w32](https://frippery.org/busybox/)
 * [dfu-util](http://dfu-util.sourceforge.net/) (also available [here](src/dfu-util/COPYING))
 * upload-reset
+* uf2upload
 
 [GPLv3](#gplv3) is used for:
 * [HID-flash](https://github.com/Serasidis/STM32_HID_Bootloader)
